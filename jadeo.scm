@@ -52,6 +52,7 @@
            (== (answer $* store) val/store)
            (== (answer (cons $ $*) store) ans)
            (apply-rel-ko k ans out))]
+  
    ))
 
 (define (apply-rel-subr rel-name args s/c env store cont mc out $)
@@ -105,8 +106,16 @@
            (apply-rel-ko cont ans out))]
    [(fresh ()
 	   (== 'meaning-scmo rel-name)
-	   (== (list e r st k out) args)
-	   
+	   (== (list e r st k scm-out) args)
+	   (== (cons sub count) s/c)
+	   (conde
+            [(== #f sub') (== '() $)]
+            [(=/= #f sub') (== `((,sub' . ,count)) $)])
+	   (== (cons (list 'kanren s/c env store cont) mc) forced-new-mc)
+	   (meta-cont-forceo new-mc forced-new-mc)
+	   (eval-scm-auxo e r st k new-mc out v-out)
+	   (meaning-scmo e r st k s/c scm-out sub sub')
+	   (apply-rel-ko cont (cons $ store) mc out)
 	   )])))
 (define (eval-list-gexpo gexp* s/c env store cont mc out $*)
   (conde
@@ -154,11 +163,10 @@
 	 (meta-cont-forceo mc forced-mc)
 	 (eval-scm-auxo body env-res upper-store upper-cont upper-meta-cont out v-out)
 	 ))
-(define (meaning-scmo e r st k s/c env store cont mc out v-out)
+(define (meaning-scmo e r st k s/c scm-out sub sub')
+  (meaning-scmo e r st k s/c env store cont mc out v-out)
   (fresh ()
-	 (== (cons (list 'kanren s/c env store cont) mc) forced-new-mc)
-	 (meta-cont-forceo new-mc forced-new-mc)
-	 (eval-scm-auxo e r st k new-mc out v-out)
+	
 	 ))
 (define (continuation-reflyo reified-k reflected-k)
   (fresh ()
