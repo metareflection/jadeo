@@ -19,7 +19,7 @@
            (== empty-k cont)
            (== val/store out)
            (== (answer rel store) val/store))]
-   [(fresh (args s/c env k $)
+   [(fresh (args s/c env k v-out $)
 	   (== (list 'application-rel-k args s/c env k mc $) cont)
 	   (== (answer rel store) val/store)
 	   (conde
@@ -28,7 +28,10 @@
 	    [(== rel (list 'rel-abs paras body))
 	     (apply-rel-abs paras body args s/c env store k mc out $)]
 	    [(== rel (list 'muo-reifier paras body))
-	     (apply-rel-reifier paras body args s/c env store k mc out $)]))]
+	     (apply-muo-reifier paras body args s/c env store k mc out $)]
+	    [(== rel (list 'muos-reifier paras body))
+	     (== v-out $)
+	     (apply-muos-reifier paras body args s/c env store k mc out v-out)]))]
    [(fresh (g1-$ ge2 k)
 	   (== (list 'bind-k ge2 s/c env k mc $) cont)
 	   (== (answer g1-$ store) val/store)
@@ -86,21 +89,25 @@
 	   (== (list 'rel-abs paras body s/c env) val)
 	   (== (answer val store) ans)
            (apply-rel-ko cont ans out))]
-   [(fresh (paras body val ans e-para s/c-para r-para st-para k-para out-para)
+   [(fresh (paras body val ans e-para s/c-para r-para st-para k-para)
 	   (== 'muo rel-name)
-	   (== paras (list e-para s/c-para r-para st-para k-para out-para))
+	   (== paras (list e-para s/c-para r-para st-para k-para))
 	   (== (list paras body) args)
 	   (== (list 'muo-reifier paras body) val)
 	   (== (answer val store) ans)
            (apply-rel-ko cont ans out))]
-   [(fresh (paras body val ans e-para s/c-para r-para st-para k-para out-para)
+   [(fresh (paras body val ans e-para s/c-para r-para st-para k-para)
 	   (== 'muos rel-name)
-	   (== paras (list e-para s/c-para r-para st-para k-para out-para))
+	   (== paras (list e-para s/c-para r-para st-para k-para))
 	   (== (list paras body) args)
 	   (== (list 'muos-reifier paras body) val)
 	   (== (answer val store) ans)
-           (apply-rel-ko cont ans out))
-    ]))))
+           (apply-rel-ko cont ans out))]
+   [(fresh ()
+	   (== 'meaning-scmo rel-name)
+	   (== (list e r st k out) args)
+	   
+	   )])))
 (define (eval-list-gexpo gexp* s/c env store cont mc out $*)
   (conde
     [(fresh (ans)
@@ -128,14 +135,34 @@
       (conj (rel (car lst)) (map-relo rel (cdr lst)))))
 
 (define (apply-muo-reifier paras body args s/c env store cont mc out $)
-  (fresh (e-para s/c-para r-para st-para k-para)
+  (fresh (e-para s/c-para r-para st-para k-para
+		 upper-s/c upper-env upper-store upper-cont upper-meta-cont
+		 forced-mc env-res)
 	 (== paras (list e-para s/c-para r-para st-para k-para))
-	 (== (cons (list upper-s/c upper-env upper-store upper-cont) upper-meta-cont) forced-mc)
-	 (exto paras (list args s/c env store cont) upper-s/c s/c-res)
+	 (== (cons (list 'kanren upper-s/c upper-env upper-store upper-cont)
+		   upper-meta-cont) forced-mc)
+	 (ext-s/co paras (list args s/c env store cont) upper-s/c s/c-res)
 	 (meta-cont-forceo mc forced-mc)
 	 (eval-gexp-auxo body s/c-res upper-env upper-store upper-cont upper-meta-cont out $)
 	 ))
-
+(define (apply-muos-reifier paras body args s/c env store cont mc out v-out)
+  (fresh (e-para s/c-para r-para st-para k-para
+		 upper-env upper-store upper-cont upper-meta-cont forced-mc env-res)
+	 (== paras (list e-para s/c-para r-para st-para k-para))
+	 (== (cons (list 'scheme upper-env upper-store upper-cont) upper-meta-cont) forced-mc)
+	 (ext-envo paras (list args s/c env store cont) upper-env env-res)
+	 (meta-cont-forceo mc forced-mc)
+	 (eval-scm-auxo body env-res upper-store upper-cont upper-meta-cont out v-out)
+	 ))
+(define (meaning-scmo e r st k s/c env store cont mc out v-out)
+  (fresh ()
+	 (== (cons (list 'kanren s/c env store cont) mc) forced-new-mc)
+	 (meta-cont-forceo new-mc forced-new-mc)
+	 (eval-scm-auxo e r st k new-mc out v-out)
+	 ))
+(define (continuation-reflyo reified-k reflected-k)
+  (fresh ()
+	 ))
 ;; expression * environment * state * continuation * value -> goal
 (define eval-schemeo
   (lambda (exp env s k v-out)
