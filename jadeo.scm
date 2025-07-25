@@ -27,11 +27,7 @@
        (=/= 'delayed a)
        (== `(,a . ,r1) $)
        (mpluso d $2 r1))]))
-(define (bind $ g)
-  (cond
-    ((null? $) mzero)
-    ((procedure? $) (lambda () (bind ($) g)))
-    (else (mplus (g (car $)) (bind (cdr $) g)))))
+
 (define (bindo $ ge env store cont mc out $-out)
   (conde
    [(== '() $)
@@ -206,6 +202,10 @@
            (== (answer $* store) val/store)
            (== (answer (cons v-out $*) store) ans)
            (apply-rel-ko k ans mc out))]
+   [(fresh (v-out store)
+	   (== (list 'exit-level-k v-out) cont)
+	   (== (answer v-out store) v/s)
+	   (apply-exit-level-conto v-out mc out))]
   
    ))
 
@@ -245,31 +245,52 @@
 	   (== (answer v-out store) ans)
            (apply-rel-ko cont ans mc out))]
      
-   [(fresh (paras body val ans e-para s/c-para r-para st-para k-para)
+   [(fresh (paras body ans e-para s/c-para r-para st-para k-para)
 	   (== 'muo rel-name)
 	   (== paras (list e-para s/c-para r-para st-para k-para))
 	   (== (list paras body) args)
-	   (== (list 'muo-reifier paras body) val)
-	   (== (answer val store) ans)
-           (apply-rel-ko cont ans out))]
-   [(fresh (paras body val ans e-para s/c-para r-para st-para k-para)
+	   (== (list 'muo-reifier paras body) v-out)
+	   (== (answer v-out store) ans)
+           (apply-rel-ko cont ans mc out))]
+   [(fresh (paras body ans e-para s/c-para r-para st-para k-para)
 	   (== 'muos rel-name)
 	   (== paras (list e-para s/c-para r-para st-para k-para))
 	   (== (list paras body) args)
-	   (== (list 'muos-reifier paras body) val)
-	   (== (answer val store) ans)
-           (apply-rel-ko cont ans out))]
+	   (== (list 'muos-reifier paras body) v-out)
+	   (== (answer v-out store) ans)
+           (apply-rel-ko cont ans mc out))]
    [(fresh (e r st k)
 	   (== 'meaning-scm rel-name)
 	   (== (list e r st k) args)
-	   (meaning-scm-o e r st k s/c env store cont mc out v-out)
+	   (apply-substitution s/c (list e r st k))
+	   (meaning-scm-o e r st k (list 'kanren s/c env store cont) mc out v-out)
 	   )]
    [(fresh (e s/c-arg r st k)
 	   (== 'meaning-mk rel-name)
 	   (== (list e s/c-arg r st k) args)
-	   (meaning-mk-o e s/c-arg r st k s/c env store cont mc out v-out)
+	   (apply-substitution s/c (list e s/c-arg r st k))
+	   (meaning-mk-o e s/c-arg r st k (list 'kanren s/c env store cont) mc out v-out)
 	   )])))
+;; use a substitution to give additional constraints to terms
+;; update the substitution of the program using a reified substitution and a list of terms
+(define (apply-substitution s/c tms)
+  )
 
+(define (apply-exit-level-conto v-out mc out)
+  (conde
+   [(fresh (upper-s/c upper-env upper-store upper-cont upper-meta-cont
+		      forced-mc)
+	   (== (cons (list 'kanren upper-s/c upper-env upper-store upper-cont)
+		     upper-meta-cont) forced-mc)
+	   (meta-cont-forceo mc forced-mc)
+	   (apply-rel-ko upper-cont (cons v-out upper-store) upper-meta-cont out)
+           )]
+   [(fresh (upper-env upper-store upper-cont upper-meta-cont forced-mc)
+	   (== (cons (list 'scheme upper-env upper-store upper-cont)
+		     upper-meta-cont) forced-mc)
+	   (meta-cont-forceo mc forced-mc)
+	   (apply-ko upper-cont (cons v-out upper-store) upper-meta-cont out)
+           )]))
 (define (eval-list-gexpo gexp* s/c env store cont mc out $*)
   (conde
     [(fresh (ans)
@@ -324,30 +345,25 @@
 	 (eval-scm-auxo body env-res upper-store upper-cont upper-meta-cont out v-out)
 	 ))
 ;; needs to look up substitution for possible values of e r st k s/c, before using them
-(define  (meaning-scm-o e r st k s/c env store cont mc out v-out)
+(define  (meaning-scm-o e r st k cur-level mc out v-out)
   (fresh (forced-new-mc new-mc new-k)
-	 (== (cons (list 'kanren s/c env store cont) mc) forced-new-mc)
+	 (== (cons cur-level mc) forced-new-mc)
 	 (meta-cont-forceo new-mc forced-new-mc)
 	 (add-end-scm-conto k (list 'exit-level-k v-out) new-k)
-	 (apply-substitution s/c (list e r st k))
 	 (eval-scm-auxo e r st new-k new-mc out e-out)
 	 ))
-(define (meaning-mk-o e s/c-arg r st k s/c env store cont mc out $)
+(define (meaning-mk-o e s/c-arg r st k cur-level mc out $)
    (fresh (forced-new-mc new-mc new-k)
-	 (== (cons (list 'kanren s/c env store cont) mc) forced-new-mc)
+	 (== (cons cur-level mc) forced-new-mc)
 	 (meta-cont-forceo new-mc forced-new-mc)
 	 (add-end-mk-conto k (list 'exit-level-k $) new-k)
-	 (apply-substitution s/c (list e s/c-arg r st k))
 	 (eval-gexp-auxo e r st new-k new-mc out e-out)
 	 ))
-;; use a substitution to give additional constraints to terms
-;; update the substitution of the program using a reified substitution and a list of terms
-(define (apply-substitution s/c tms)
-  )
+
 (define (add-end-scm-conto k end-k new-k)
   (conde []
 	 ))
-(define (add-end-scm-conto k end-k new-k)
+(define (add-end-mk-conto k end-k new-k)
   (conde []
 	 ))
 ;; expression * environment * state * continuation * value -> goal
@@ -387,14 +403,6 @@
 			    (list 'application-k args env cont v-out)
 			    out v-out-ignore))])))
 
-(define (apply-exit-level-conto v-out mc out)
-  (fresh (upper-s/c upper-env upper-store upper-cont upper-meta-cont
-		    forced-mc)
-	 (== (cons (list 'kanren upper-s/c upper-env upper-store upper-cont)
-		   upper-meta-cont) forced-mc)
-	 (meta-cont-forceo mc forced-mc)
-	 (apply-rel-ko upper-cont (cons v-out upper-store) upper-meta-cont out)
-         ))
 (define apply-ko
   (lambda (cont v/s mc out)
     (conde
@@ -416,7 +424,10 @@
 	      [(== fval (list 'lambda-abstraction paras body lambda-env))
 	       (eval-list-scmo args env store
 			       (list 'apply-lambda-k (list paras body lambda-env v-out) k)
-			       mc out v-out)]))]
+			       mc out v-out)]
+	      [(== fval (list 'muso-reifier paras body))
+	       (apply-muso-reifier paras body args env store k mc out v-out)]
+	      ))]
      [(fresh (subr-name v-out k vals store)
 	     (== (list 'apply-subr-k (list subr-name v-out) k) cont)
 	     (== (answer vals store) v/s)
@@ -446,7 +457,18 @@
              (exts-storeo addr v store store^)
              (lookup-env-only-auxo x env addr)
              (apply-ko k (answer 'void store^) mc out)
-             )])))
+             )]
+     [(fresh (env k e-v r-v st-v k-v store)
+	     (== (list 'spawn-scm-k (list env) k) cont)
+	     (== (answer (list e-v r-v st-v k-v) store) v/s)
+	     (meaning-scm-o e-v r-v st-v k-v
+			    (list 'scheme env store k) mc out v-out))]
+     [(fresh (env k e-v s/c-v r-v st-v k-v store)
+	     (== (list 'spawn-mk-k (list env) k) cont)
+	     (== (answer (list e-v s/c-v r-v st-v k-v) store) v/s)
+	     (meaning-mk-o e-v s/c-v r-v st-v k-v
+			   (list 'scheme env store k) mc out v-out))]
+     )))
 (define (eval-list-scmo exp* env store cont mc out v-out*)
   (conde
    [(fresh (ans)
@@ -476,11 +498,28 @@
            (apply-ko cont ans mc out))]
    [(== 'list fsubr-name)
     (eval-list-scmo args env store cont mc out v-out)]
-   
-   ))   
-
-
-
+   [(fresh (paras body ans e-para r-para st-para k-para)
+	   (== 'muso fsubr-name)
+	   (== paras (list e-para r-para st-para k-para))
+	   (== (list paras body) args)
+	   (== (list 'muso-reifier paras body) v-out)
+	   (== (answer v-out store) ans)
+           (apply-ko cont ans mc out))]
+   [(fresh (e r st k)
+	   (== 'meaning-scm f-subr)
+	   (== (list e r st k) args)
+	   (eval-list-scmo (list e r st k) env store
+			   (list 'spawn-scm-k (list env) cont)
+			   mc out spawn-args))]
+   [(fresh (e s/c-arg r st k)
+	   (== 'meaning-mk f-subr)
+	   (== (list e s/c-arg r st k) args)
+	   (eval-list-scmo (list e s/c-arg r st k) env store
+			   (list 'spawn-mk-k (list env) cont)
+			   mc out spawn-args)
+	   
+	   )]
+   ))
 
 (define (apply-proco paras body env vals store cont mc out v-out)
   (fresh (addrs env^ store^)
@@ -490,6 +529,17 @@
 	 (map-relo symbolo paras)
 	 (map-relo (not-in-storeo store) addrs)
 	 (eval-scm-auxo body env^ store^ cont mc out v-out) 
+	 ))
+(define (apply-muso-reifier paras body args env store cont mc out $)
+  (fresh (e-para r-para st-para k-para
+		 upper-s/c upper-env upper-store upper-cont upper-meta-cont
+		 forced-mc env-res)
+	 (== paras (list e-para r-para st-para k-para))
+	 (== (cons (list 'kanren upper-s/c upper-env upper-store upper-cont)
+		   upper-meta-cont) forced-mc)
+	 (exts-s/co paras (list args env store cont) upper-s/c s/c-res)
+	 (meta-cont-forceo mc forced-mc)
+	 (eval-gexp-auxo body s/c-res upper-env upper-store upper-cont upper-meta-cont out $)
 	 ))
 
 #|
@@ -511,9 +561,3 @@
        (eval-gexpro `(conj* ,ge . ,ge*) s/c env^ mc $))]
 |#
 
-(define eval-prog-auxo
-    (lambda (exp s/c env)
-        ((_generate_toplevel-continuation initial-level
-                                          (make-initial-environment)
-					  (make-initial-evaluator))
-             lavender-banner (initial-meta-continuation initial-level))))
