@@ -1,24 +1,148 @@
-;; what's left
-#|
-- lookupo
-- symbolo
-- force-mco
-- bindo
-- mpluso
-- unifyo
-- not-in-store-o
-- meta cont related
+(define (ext-so u v s s1)
+  (== `((,u . ,v) . ,s) s1))
 
-- ext-s/co: how to extend a substitution when calling reifiers
-- other ext, for env and store
-- how env works and how fresh works
+(define (meta-cont-forceo mc fc)
+  (conde
+    [(fresh (level)
+       (== mc `(next-meta-cont ,level))
+       (gen-meta-conto `(s ,level) fc))]
+    [(fresh (a d)
+       (== (cons a d) mc)
+       (=/= a 'next-meta-cont)
+       (== mc fc))]))
+(define (gen-meta-conto level mc)
+  (== `((kanren ,mini-init-env ,mini-init-store ,init-cont)
+	(kanren ,micro-init-env ,micro-init-store ,init-cont)
+	(scheme ,scm-init-env ,scm-init-store ,init-cont)
+	. (next-meta-cont ,level)) mc))
 
-|#
-
-
+(define (mpluso $1 $2 $)
+  (conde
+    [(== '() $1) (== $2 $)]
+    [(fresh (d)
+       (== `(delayed . ,d) $1)
+       (== `(delayed mplus ,$1 ,$2) $))]
+    [(fresh (a d r1)
+       (== `(,a . ,d) $1)
+       (=/= 'delayed a)
+       (== `(,a . ,r1) $)
+       (mpluso d $2 r1))]))
+(define (bind $ g)
+  (cond
+    ((null? $) mzero)
+    ((procedure? $) (lambda () (bind ($) g)))
+    (else (mplus (g (car $)) (bind (cdr $) g)))))
+(define (bindo $ ge env store cont mc out $-out)
+  (conde
+   [(== '() $)
+    (== mzero $-out)
+    (apply-rel-ko cont (answer $-out store) mc out)]
+   [(fresh (d)
+	   (== `(delayed . ,d) $)
+	   (== `(delayed bind ,$ ,ge ,env) $-out)
+	   (apply-rel-ko cont (answer $-out store) mc out))]
+   [(fresh (s/c $-rst v-a v-d)
+	   (== (cons s/c $-rst) $)
+	   (=/= 'delayed s/c)
+	   (eval-gexp-auxo ge s/c env store
+			   (list 'bind-rec-k (list $-rst ge env $-out) cont)
+			   mc out ge-out)
+	   )]))
+(define (unifyo u-unwalked v-unwalked s s1)
+  (fresh (u v)
+	 (walko u-unwalked s u)
+	 (walko v-unwalked s v)
+	 (conde
+	  [(var?o u) (var?o v) (var=?o u v) (== s s1)]
+	  [(var?o u) (var?o v) (var=/=o u v) (ext-so u v s s1)]
+	  [(var?o u) (numbero v) (ext-so u v s s1)]
+	  [(var?o u) (symbolo v) (ext-so u v s s1)]
+	  [(var?o u) (booleano v) (ext-so u v s s1)]
+	  [(var?o u) (== '() v) (ext-so u v s s1)]
+	  [(var?o u)
+	   (fresh (a d)
+		  (== `(,a . ,d) v)
+		  (=/= 'var a))
+	   (ext-so u v s s1)]
+	  [(numbero u) (var?o v) (ext-so v u s s1)]
+	  [(numbero u) (numbero v) (== u v) (== s s1)]
+	  [(numbero u) (numbero v) (=/= u v) (== #f s1)]
+	  [(numbero u) (symbolo v) (== #f s1)]
+	  [(numbero u) (booleano v) (== #f s1)]
+	  [(numbero u) (== '() v) (== #f s1)]
+	  [(numbero u)
+	   (fresh (a d)
+		  (== `(,a . ,d) v)
+		  (=/= 'var a))
+	   (== #f s1)]
+	  [(symbolo u) (var?o v) (ext-so v u s s1)]
+	  [(symbolo u) (numbero v) (== #f s1)]
+	  [(symbolo u) (symbolo v) (== u v) (== s s1)]
+	  [(symbolo u) (symbolo v) (=/= u v) (== #f s1)]
+	  [(symbolo u) (booleano v) (== #f s1)]
+	  [(symbolo u) (== '() v) (== #f s1)]
+	  [(symbolo u)
+	   (fresh (a d)
+		  (== `(,a . ,d) v)
+		  (=/= 'var a))
+	   (== #f s1)]
+	  [(booleano u) (var?o v) (ext-so v u s s1)]
+	  [(booleano u) (numbero v) (== #f s1)]
+	  [(booleano u) (symbolo v) (== #f s1)]
+	  [(booleano u) (booleano v) (== u v) (== s s1)]
+	  [(booleano u) (booleano v) (=/= u v) (== #f s1)]
+	  [(booleano u) (== '() v) (== #f s1)]
+	  [(booleano u)
+	   (fresh (a d)
+		  (== `(,a . ,d) v)
+		  (=/= 'var a))
+	   (== #f s1)]
+	  [(== '() u) (var?o v) (ext-so v u s s1)]
+	  [(== '() u) (numbero v) (== #f s1)]
+	  [(== '() u) (symbolo v) (== #f s1)]
+	  [(== '() u) (booleano v) (== #f s1)]
+	  [(== '() u) (== '() v) (== s s1)]
+	  [(== '() u)
+	   (fresh (a d)
+		  (== `(,a . ,d) v)
+		  (=/= 'var a))
+	   (== #f s1)]
+	  [(var?o v)
+	   (fresh (a d)
+		  (== `(,a . ,d) u)
+		  (=/= 'var a))
+	   (ext-so v u s s1)]
+	  [(numbero v)
+	   (fresh (a d)
+		  (== `(,a . ,d) u)
+		  (=/= 'var a))
+	   (== #f s1)]
+	  [(symbolo v)
+	   (fresh (a d)
+		  (== `(,a . ,d) u)
+		  (=/= 'var a))
+	   (== #f s1)]
+	  [(booleano v)
+	   (fresh (a d)
+		  (== `(,a . ,d) u)
+		  (=/= 'var a))
+	   (== #f s1)]
+	  [(== '() v)
+	   (fresh (a d)
+		  (== `(,a . ,d) u)
+		  (=/= 'var a))
+	   (== #f s1)]
+	  [(fresh (u-a u-d v-a v-d s-a)
+		  (== `(,u-a . ,u-d) u)
+		  (== `(,v-a . ,v-d) v)
+		  (=/= 'var u-a)
+		  (=/= 'var v-a)
+		  (conde
+		   [(== s-a #f) (== #f s1) (unifyo u-a v-a s s-a)]
+		   [(=/= s-a #f)
+		    (unifyo u-a v-a s s-a)
+		    (unifyo u-d v-d s-a s1)]))])))
 ;; evaluator for microkanren
-;; e-out = result of evaluating gexp
-;; k-out = cont applied to e-out and mc
 (define (eval-gexp-auxo gexp s/c env store cont mc out v-out)
   (conde
    [(fresh (rel ans)
@@ -51,14 +175,27 @@
 	     (apply-muo-reifier paras body args s/c env store k mc out v-out)]
 	    [(== rel (list 'muos-reifier paras body))
 	     (apply-muos-reifier paras body args s/c env store k mc out v-out)]))]
-   [(fresh (g1-$ ge2 s/c env k v-out)
-	   (== (list 'bind-k (list ge2 s/c env v-out) k) cont)
+   [(fresh (g1-$ ge2 env k v-out)
+	   (== (list 'bind-k (list ge2 env v-out) k) cont)
 	   (== (answer g1-$ store) val/store)
 	   (bindo g1-$ ge2 s/c env store k mc out v-out))]
-   [(fresh ($1 $2 s/c env k v-out)
-	   (== (list 'mplus-k (list s/c env v-out) k) cont)
+   [(fresh ($-rst ge env k full-bind-out ge-out1 store $-rst-out)
+	   (== (list 'bind-rec-k (list $-rst ge env full-bind-out) k) cont)
+	   (== (answer ge-out1 store) val/store)
+	   (bindo $-rst ge env store
+		  (list 'mplus-with-k (list ge-out1 full-bind-out) k)
+		  mc out $-rst-out))]
+   [(fresh (ge-out1 full-bind-out $-rst-out k store)
+	   (== (list 'mplus-with-k (list ge-out1 full-bind-out) k) cont)
+	   (== (answer $-rst-out store) val/store)
+	   (mpluso ge-out1 $-rst-out full-bind-out)
+	   (apply-rel-ko k (answer full-bind-out store) mc out)
+	   )]
+   [(fresh ($1 $2 k v-out)
+	   (== (list 'mplus-k (list v-out) k) cont)
 	   (== (answer (list $1 $2) store) val/store)
-	   (mpluso $1 $2 s/c env store k mc out v-out))]
+	   (mpluso $1 $2 v-out)
+	   (apply-rel-ko k (answer v-out store) mc out))]
    [(fresh (env k v-out store gexp*-rst $*-rst)
            (== (list 'eval-list-k (list gexp*-rst env $*-rst) k) cont)
            (== (answer v-out store) val/store)
@@ -87,13 +224,13 @@
 	   (== 'conj rel-name)
 	   (== (list ge1 ge2) args)
 	   (eval-gexp-auxo ge1 s/c env store
-			   (list 'bind-k (list ge2 s/c env v-out) cont)
+			   (list 'bind-k (list ge2 env v-out) cont)
 			   mc out ge1-$))]
    [(fresh (ge1 ge2 ge1-$ ge2-$ ge$)
 	   (== 'disj rel-name)
 	   (== (list ge1 ge2) args)
 	   (eval-list-gexpo (list ge1 ge2) s/c env store
-			   (list 'mplus-k (s/c env v-out) cont)
+			   (list 'mplus-k (list v-out) cont)
 			   mc out ge1-ge2-$-lst))]
    [(fresh (x1 x2 ge sub count)
 	   (== 'call/fresh rel-name)
@@ -149,8 +286,8 @@
 
 (define (apply-rel-abso para* body arg* s/c env store cont mc out $)
   (fresh (addr* env^ store^)
-	 (ext-envo para* addr* env env^)
-	 (ext-storeo addr* arg* store store^)
+	 (exts-envo para* addr* env env^)
+	 (exts-storeo addr* arg* store store^)
 	 (map-relo numbero addr*)
 	 (map-relo symbolo para*) ;; do this on all element of list
 	 (map-relo (not-in-storeo store) addr*)
@@ -159,6 +296,13 @@
   (if (null? lst) #s
       (conj (rel (car lst)) (map-relo rel (cdr lst)))))
 
+(define not-in-storeo
+  (lambda (store addr)
+    (fresh (addr*)
+      (numbero addr)
+      (store->addr*o store addr*)
+      (absento addr addr*))))
+
 (define (apply-muo-reifier paras body args s/c env store cont mc out $)
   (fresh (e-para s/c-para r-para st-para k-para
 		 upper-s/c upper-env upper-store upper-cont upper-meta-cont
@@ -166,7 +310,7 @@
 	 (== paras (list e-para s/c-para r-para st-para k-para))
 	 (== (cons (list 'kanren upper-s/c upper-env upper-store upper-cont)
 		   upper-meta-cont) forced-mc)
-	 (ext-s/co paras (list args s/c env store cont) upper-s/c s/c-res)
+	 (exts-s/co paras (list args s/c env store cont) upper-s/c s/c-res)
 	 (meta-cont-forceo mc forced-mc)
 	 (eval-gexp-auxo body s/c-res upper-env upper-store upper-cont upper-meta-cont out $)
 	 ))
@@ -175,7 +319,7 @@
 		 upper-env upper-store upper-cont upper-meta-cont forced-mc env-res)
 	 (== paras (list e-para s/c-para r-para st-para k-para))
 	 (== (cons (list 'scheme upper-env upper-store upper-cont) upper-meta-cont) forced-mc)
-	 (ext-envo paras (list args s/c env store cont) upper-env env-res)
+	 (exts-envo paras (list args s/c env store cont) upper-env env-res)
 	 (meta-cont-forceo mc forced-mc)
 	 (eval-scm-auxo body env-res upper-store upper-cont upper-meta-cont out v-out)
 	 ))
@@ -221,28 +365,28 @@
 ;; v-out is the value of exp under environment env and store s,
 ;; out is final value-state pair after applying continuation k
 (define eval-scm-auxo
-  (lambda (exp env s k out v-out)
+  (lambda (exp env store cont out v-out)
     (conde
      [(fresh (val)
 	     (== exp v-out)
-	     (== ans (answer exp s))
+	     (== ans (answer exp store))
 	     (conde
 	      [(numbero exp)]
 	      [(booleano exp)]
 	      [(== '() exp)])
-	     (apply-ko k ans out))]
+	     (apply-ko cont ans out))]
      [(fresh (v ans)
              (symbolo exp)         
-             (lookupo exp env s v)
-             (== v v-out) ; v-out
-             (== (answer v s) ans)
-             (apply-ko k ans out))]
+             (lookupo exp env store v)
+             (== v v-out)
+             (== (answer v store) ans)
+             (apply-ko cont ans out))]
      [(fresh (val)
 	     (== (f . args) exp)
-	     (eval-scm-auxo f env s
-			    (list 'application-k args env k v-out)
+	     (eval-scm-auxo f env store
+			    (list 'application-k args env cont v-out)
 			    out v-out-ignore))])))
-;; does upper cont contain enough info about upper env and upper store?
+
 (define (apply-exit-level-conto v-out mc out)
   (fresh (upper-s/c upper-env upper-store upper-cont upper-meta-cont
 		    forced-mc)
@@ -250,8 +394,7 @@
 		   upper-meta-cont) forced-mc)
 	 (meta-cont-forceo mc forced-mc)
 	 (apply-rel-ko upper-cont (cons v-out upper-store) upper-meta-cont out)
-	 ;;(eval-gexp-auxo v-out upper-s/c upper-env upper-store upper-cont upper-meta-cont out v-out)
-	 ))
+         ))
 (define apply-ko
   (lambda (cont v/s mc out)
     (conde
@@ -300,7 +443,7 @@
              (== (list 'set!-k (list x env) k) cont)
              (== (answer v store) v/s)
              (numbero addr)
-             (ext-storeo addr v store store^)
+             (exts-storeo addr v store store^)
              (lookup-env-only-auxo x env addr)
              (apply-ko k (answer 'void store^) mc out)
              )])))
@@ -341,13 +484,14 @@
 
 (define (apply-proco paras body env vals store cont mc out v-out)
   (fresh (addrs env^ store^)
-	 (ext-envo paras addrs env env^)
-	 (ext-storeo addrs vals store store^)
+	 (exts-envo paras addrs env env^)
+	 (exts-storeo addrs vals store store^)
 	 (map-relo numbero addrs)
 	 (map-relo symbolo paras)
 	 (map-relo (not-in-storeo store) addrs)
 	 (eval-scm-auxo body env^ store^ cont mc out v-out) 
-	 )))
+	 ))
+
 #|
   [(fresh (x e v ge ge* env^)
        (== `(let ((,x ,e)) ,ge . ,ge*) expr)
@@ -366,3 +510,10 @@
        (== `((rec (scheme-closr ,id ,params ,body-expr)) . ,env) env^)
        (eval-gexpro `(conj* ,ge . ,ge*) s/c env^ mc $))]
 |#
+
+(define eval-prog-auxo
+    (lambda (exp s/c env)
+        ((_generate_toplevel-continuation initial-level
+                                          (make-initial-environment)
+					  (make-initial-evaluator))
+             lavender-banner (initial-meta-continuation initial-level))))
