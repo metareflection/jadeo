@@ -1,8 +1,8 @@
 ;;; newer version: 19 March 2013
 
-(library (mk-lib)
-  (export == =/= symbolo numbero absento fresh conde run run* project conda condu errorg fails-unless-contains fail)
-  (import (rnrs) (only (chezscheme) sort sub1 printf))
+;;(library (mk-lib)
+  ;;(export == =/= symbolo numbero absento fresh conde run run* project conda condu errorg fails-unless-contains fail)
+  ;;(import (rnrs) (only (chezscheme) sort sub1 printf))
 
 (define empty-c '(() () () () ())) ;; moved 
 
@@ -850,4 +850,4 @@
       ,move-T-to-D-b/c-t2-atom ,split-t-move-to-d-b/c-pair
       ,drop-from-D-b/c-T ,drop-t-b/c-t2-occurs-t1)))
 
-)
+;;)

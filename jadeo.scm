@@ -1,39 +1,80 @@
+(load "lookupo-lib.scm")
+(load "mk-lib.scm")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Basic Helpers ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define answer cons)
+(define peano-zero '())
+(define (peano-incr n) `(,n))
+(define (peano n)
+  (if (zero? n) '() `(,(peano (- n 1)))))
+
+(define (var?o x)
+  (fresh (val)
+    ;; `val` is a Peano numeral    
+    (== `(var . ,val) x)))
+
+(define (var=?o x y)  
+  (fresh (val)
+    ;; `val` is a Peano numeral
+    (== `(var . ,val) x)
+    (== `(var . ,val) y)))
+
+(define (var=/=o x y)
+  (fresh (val1 val2)
+    ;; `val1` and `val2` are Peano numerals
+    (== `(var . ,val1) x)
+    (== `(var . ,val2) y)
+    (=/= val1 val2)))
+
+(define (booleano b)
+  (conde
+    [(== #t b)]
+    [(== #f b)]))
+
+(define (walko u s v)
+  (conde
+    [(== u v)
+     (conde
+       [(symbolo u) (== u v)]
+       [(numbero u) (== u v)]
+       [(booleano u) (== u v)]
+       [(== '() u) (== u v)])]
+    [(fresh (a d)
+       (== `(,a . ,d) u)
+       (=/= a 'var)
+       (== u v))]
+    [(var?o u)
+     (conde
+       [(== u v) (not-assp-subo u s)]
+       [(fresh (pr-d)
+          (assp-subo u s `(,u . ,pr-d))
+          (walko pr-d s v))])]))
+(define (assp-subo v s out)
+  (fresh (h t h-a h-d)
+    (== `(,h . ,t) s)
+    (== `(,h-a . ,h-d) h)
+    (var?o v)
+    (var?o h-a)
+    (conde
+      [(== h-a v) (== h out)]
+      [(=/= h-a v) (assp-subo v t out)])))
+
+(define (not-assp-subo v s)
+  (fresh ()
+    (var?o v)
+    (conde
+      [(== '() s)]
+      [(fresh (t h-a h-d)
+        (== `((,h-a . ,h-d) . ,t) s)
+        (var?o h-a)
+        (=/= h-a v)
+        (not-assp-subo v t))])))
+
 
 (define (ext-so u v s s1)
   (== `((,u . ,v) . ,s) s1))
 
-
-(define (mpluso $1 $2 $)
-  (conde
-    [(== '() $1) (== $2 $)]
-    [(fresh (d)
-       (== `(delayed . ,d) $1)
-       (== `(delayed mplus ,$1 ,$2) $))]
-    [(fresh (a d r1)
-       (== `(,a . ,d) $1)
-       (=/= 'delayed a)
-       (== `(,a . ,r1) $)
-       (mpluso d $2 r1))]))
-
-(define (bindo $ ge env store cont mc out $-out)
-  (conde
-   [(== '() $)
-    (== mzero $-out)
-    (apply-rel-ko cont (answer $-out store) mc out)]
-   [(fresh (d)
-	   (== `(delayed . ,d) $)
-	   (== `(delayed bind ,$ ,ge ,env) $-out)
-	   (apply-rel-ko cont (answer $-out store) mc out))]
-   [(fresh (s/c $-rst v-a v-d)
-	   (== (cons s/c $-rst) $)
-	   (=/= 'delayed s/c)
-	   (eval-gexp-auxo ge s/c env store
-			   (list 'bind-rec-k (list $-rst ge env $-out) cont)
-			   mc out ge-out)
-	   )]))
 (define (unifyo u-unwalked v-unwalked s s1)
   (fresh (u v)
 	 (walko u-unwalked s u)
@@ -129,6 +170,37 @@
 		    (unifyo u-a v-a s s-a)
 		    (unifyo u-d v-d s-a s1)]))])))
 
+
+(define (mpluso $1 $2 $)
+  (conde
+    [(== '() $1) (== $2 $)]
+    [(fresh (d)
+       (== `(delayed . ,d) $1)
+       (== `(delayed mplus ,$1 ,$2) $))]
+    [(fresh (a d r1)
+       (== `(,a . ,d) $1)
+       (=/= 'delayed a)
+       (== `(,a . ,r1) $)
+       (mpluso d $2 r1))]))
+
+(define (bindo $ ge env store cont mc out $-out)
+  (conde
+   [(== '() $)
+    (== '() $-out)
+    (apply-rel-ko cont (answer $-out store) mc out)]
+   [(fresh (d)
+	   (== `(delayed . ,d) $)
+	   (== `(delayed bind ,$ ,ge ,env ,store) $-out)
+	   (apply-rel-ko cont (answer $-out store) mc out))]
+   [(fresh (s/c $-rst v-a v-d)
+	   (== (cons s/c $-rst) $)
+	   (=/= 'delayed s/c)
+	   (eval-gexp-auxo ge s/c env store
+			   (list 'bind-rec-k (list $-rst ge env $-out) cont)
+			   mc out ge-out)
+	   )]))
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Core Evaluators ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -143,15 +215,16 @@
            (== (answer v-out store) ans)
            (apply-rel-ko cont ans mc out))]
    [(fresh (rel-e args rel-val-ignore)
-	   (== (rel-e . args) gexp)
+	   (== (cons rel-e args) gexp)
 	   (eval-gexp-auxo rel-e s/c env store
 			  (list 'application-rel-k (list args s/c env v-out) cont)
 			  mc out rel-val-ignore))]))
-(define empty-k (list 'empty-k '() '()))
+
 (define (apply-rel-ko cont val/store mc out)
   (conde
-   [(fresh (rel store)
-           (== empty-k cont)
+   [(fresh (rel store level)
+           (== 'id-cont cont)
+	   (== mc `(next-meta-cont ,level))
            (== val/store out)
            (== (answer rel store) val/store))]
    [(fresh (args s/c env k v-out)
@@ -206,15 +279,15 @@
 
 (define (apply-rel-subr rel-name args s/c env store cont mc out v-out)
   (conde
-   [(fresh (v1 v2 sub count sub' v-out)
+   [(fresh (v1 v2 sub count sub^ v-out)
 	   (== '==mk rel-name)
 	   (== (list v1 v2) args)
 	   (== (cons sub count) s/c)
 	   (conde
-            [(== #f sub') (== '() v-out)]
-            [(=/= #f sub') (== `((,sub' . ,count)) v-out)])
-	   (unifyo v1 v2 sub sub')
-	   (apply-rel-ko cont (cons v-out store) mc out)]
+            [(== #f sub^) (== '() v-out)]
+            [(=/= #f sub^) (== `((,sub^ . ,count)) v-out)])
+	   (unifyo v1 v2 sub sub^)
+	   (apply-rel-ko cont (cons v-out store) mc out))]
    [(fresh (ge1 ge2 ge1-$ ge$)
 	   (== 'conj rel-name)
 	   (== (list ge1 ge2) args)
@@ -231,7 +304,7 @@
 	   (== 'call/fresh rel-name)
 	   (== (list x1 ge) args)
 	   (== (cons sub count) s/c)
-	   (eval-gexp-auxo ge (cons sub (+ 1 count)) (cons (cons x1 x2) env) store
+	   (eval-gexp-auxo ge (cons sub (peano-incr count)) (cons (cons x1 x2) env) store
 			   cont mc out v-out))]
    [(fresh (paras body ans)
 	   (== 'rel-abs rel-name)
@@ -257,19 +330,18 @@
    [(fresh (e r st k)
 	   (== 'meaning-scm rel-name)
 	   (== (list e r st k) args)
-	   (apply-substitution s/c (list e r st k))
+	   ;;(apply-substitution s/c (list e r st k))
 	   (meaning-scm-o e r st k (list 'kanren s/c env store cont) mc out v-out)
 	   )]
    [(fresh (e s/c-arg r st k)
 	   (== 'meaning-mk rel-name)
 	   (== (list e s/c-arg r st k) args)
-	   (apply-substitution s/c (list e s/c-arg r st k))
+	   ;;(apply-substitution s/c (list e s/c-arg r st k))
 	   (meaning-mk-o e s/c-arg r st k (list 'kanren s/c env store cont) mc out v-out)
-	   )])))
+	   )]))
 ;; use a substitution to give additional constraints to terms
 ;; update the substitution of the program using a reified substitution and a list of terms
-(define (apply-substitution s/c tms)
-  )
+;; (define (apply-substitution s/c tms)  )
 
 (define (apply-exit-level-conto v-out mc out)
   (conde
@@ -290,9 +362,9 @@
   (conde
     [(fresh (ans)
          (== '() gexp*)
-         (== '() $*) ; v-out*         
+         (== '() $*)
          (== (answer '() store) ans)
-         (apply-ko cont ans out))]
+         (apply-rel-ko cont ans out))]
     [(fresh (gexp gexp-rst $1 $-rst)
 	    (== (cons gexp gexp-rst) gexp*)
 	    (== (cons $1 $-rst) $*)
@@ -304,21 +376,37 @@
   (fresh (addr* env^ store^)
 	 (exts-envo para* addr* env env^)
 	 (exts-storeo addr* arg* store store^)
-	 (map-relo numbero addr*)
-	 (map-relo symbolo para*) ;; do this on all element of list
-	 (map-relo (not-in-storeo store) addr*)
+	 (number*o addr*)
+	 (symbol*o para*)
+	 (not-in-storeo store addr*)
 	 (eval-gexp-auxo body s/c env^ store^ cont mc out $)))
-(define (map-relo rel lst)
-  (if (null? lst) #s
-      (conj (rel (car lst)) (map-relo rel (cdr lst)))))
+(define (number*o ns)
+  (conde
+   [(== ns '())]
+   [(fresh (n ns-rst)
+	   (== (cons n ns-rst) ns)
+	   (numbero n)
+	   (number*o ns-rst))]))
+(define (symbol*o ids)
+  (conde
+   [(== ids '())]
+   [(fresh (id ids-rst)
+	   (== (cons id ids-rst) ids)
+	   (symbolo id)
+	   (symbol*o ids-rst))]))
 
-(define not-in-storeo
-  (lambda (store addr)
-    (fresh (addr*)
-      (numbero addr)
-      (store->addr*o store addr*)
-      (absento addr addr*))))
-
+(define (not-in-storeo store addrs)
+  (fresh (addr*)
+	 (store->addr*o store addr*)
+	 (no-same-addrs addrs* addrs)))
+(define (no-same-addrs addrs1 addrs2)
+  (conde
+   [(== addrs2 '())]
+   [(fresh (addr addrs2-rst)
+	   (== (cons addr addrs2-rst) addrs2)
+	   (numbero addr)
+	   (absento addr addrs1)
+	   (no-same-addrs addrs1 addrs2-rst))]))
 (define (apply-muo-reifier paras body args s/c env store cont mc out $)
   (fresh (e-para s/c-para r-para st-para k-para
 		 upper-s/c upper-env upper-store upper-cont upper-meta-cont
@@ -344,69 +432,72 @@
   (fresh (forced-new-mc new-mc new-k)
 	 (== (cons cur-level mc) forced-new-mc)
 	 (meta-cont-forceo new-mc forced-new-mc)
-	 (add-end-scm-conto k (list 'exit-level-k v-out) new-k)
+	 (add-end-conto k (list 'exit-level-k v-out) new-k)
 	 (eval-scm-auxo e r st new-k new-mc out e-out)
 	 ))
 (define (meaning-mk-o e s/c-arg r st k cur-level mc out $)
    (fresh (forced-new-mc new-mc new-k)
 	 (== (cons cur-level mc) forced-new-mc)
 	 (meta-cont-forceo new-mc forced-new-mc)
-	 (add-end-mk-conto k (list 'exit-level-k $) new-k)
+	 (add-end-conto k (list 'exit-level-k $) new-k)
 	 (eval-gexp-auxo e r st new-k new-mc out e-out)
 	 ))
 
-(define (add-end-scm-conto k end-k new-k)
-  (conde []
-	 ))
-(define (add-end-mk-conto k end-k new-k)
-  (conde []
-	 ))
+(define (add-end-conto k end-k new-k)
+  (conde
+   [(== k 'id-cont) (== new-k end-k)]
+   [(fresh (k-name k-args k-rst new-k-rst)
+	   (== k (list k-name k-args k-rst))
+	   (== new-k (list k-name k-args new-k-rst))
+	   (add-end-conto k-rst end-k new-k-rst))]))
+
 ;; expression * environment * state * continuation * value -> goal
-(define eval-schemeo
-  (lambda (exp env s k v-out)
-    (fresh (ans s^ v-out')
-      (== (answer v-out s^) ans)
-      (conde
-        [(== empty-k k)
-         (== v-out v-out')
-         ]
-        [(=/= empty-k k)])      
-      (eval-scm-auxo exp env s k ans v-out'))))
+;(define eval-schemeo
+ ; (lambda (exp env s k v-out)
+  ;  (fresh (ans s^ v-out^)
+   ;   (== (answer v-out s^) ans)
+    ;  (conde
+     ;   [(== 'id-cont k)
+      ;   (== v-out v-out^)
+       ;  ]
+        ;[(=/= 'id-cont k)])      
+      ;(eval-scm-auxo exp env s k ans mc v-out^))))
 ;; expression * environment * state * continuation * (value * state) * value -> goal
 ;; v-out is the value of exp under environment env and store s,
 ;; out is final value-state pair after applying continuation k
 (define eval-scm-auxo
-  (lambda (exp env store cont out v-out)
+  (lambda (exp env store cont mc out v-out)
     (conde
-     [(fresh (val)
+     [(fresh (val ans)
 	     (== exp v-out)
 	     (== ans (answer exp store))
 	     (conde
 	      [(numbero exp)]
 	      [(booleano exp)]
 	      [(== '() exp)])
-	     (apply-ko cont ans out))]
+	     (apply-ko cont ans mc out))]
      [(fresh (v ans)
              (symbolo exp)         
              (lookupo exp env store v)
              (== v v-out)
              (== (answer v store) ans)
-             (apply-ko cont ans out))]
-     [(fresh (val)
-	     (== (f . args) exp)
+             (apply-ko cont ans mc out))]
+     [(fresh (f args v-out-ignore)
+	     (== (cons f args) exp)
 	     (eval-scm-auxo f env store
 			    (list 'application-k args env cont v-out)
-			    out v-out-ignore))])))
+			    mc out v-out-ignore))])))
 
 (define apply-ko
   (lambda (cont v/s mc out)
     (conde
-     [(fresh (v s)
-             (== empty-k cont)
+     [(fresh (v s level)
+             (== 'id-cont cont)
+	     (== mc `(next-meta-cont ,level))
              (== v/s out)
              (== (answer v s) v/s))]
      
-     [(fresh (args env k v-out)
+     [(fresh (fval args env store k v-out)
 	     (== (list 'application-k (list args env v-out) k) cont)
 	     (== (answer fval store) v/s)
 	     (conde
@@ -439,12 +530,12 @@
 	     (apply-exit-level-conto v-out mc out))]
      [(fresh (env k v-out store exp*-rst v*-rst)
              (== (list 'eval-list-k (list exp*-rst env v*-rst) k) cont)
-             (== (answer v-out store) val/store)
+             (== (answer v-out store) v/s)
              (eval-list-scmo exp*-rst env store
 			     (list 'cons-k (list v-out) k) mc out v*-rst))]
      [(fresh (v-out k v* store ans)
              (== (list 'cons-k (list v-out) k) cont)
-             (== (answer v* store) val/store)
+             (== (answer v* store) v/s)
              (== (answer (cons v-out v*) store) ans)
              (apply-ko k ans mc out))]
      [(fresh (x env k v store addr store^)
@@ -455,27 +546,28 @@
              (lookup-env-only-auxo x env addr)
              (apply-ko k (answer 'void store^) mc out)
              )]
-     [(fresh (env k e-v r-v st-v k-v store)
+     [(fresh (env k e-v r-v st-v k-v store v-out)
 	     (== (list 'spawn-scm-k (list env) k) cont)
 	     (== (answer (list e-v r-v st-v k-v) store) v/s)
 	     (meaning-scm-o e-v r-v st-v k-v
 			    (list 'scheme env store k) mc out v-out))]
-     [(fresh (env k e-v s/c-v r-v st-v k-v store)
+     [(fresh (env k e-v s/c-v r-v st-v k-v store v-out)
 	     (== (list 'spawn-mk-k (list env) k) cont)
 	     (== (answer (list e-v s/c-v r-v st-v k-v) store) v/s)
 	     (meaning-mk-o e-v s/c-v r-v st-v k-v
 			   (list 'scheme env store k) mc out v-out))]
-     [(fresh (ids addrs let-args-vals body store k env^ store^)
+     [(fresh (ids addrs let-args-vals body env store k env^ store^ v-out)
 	     (== (list 'let-k (list ids body) k) cont)
 	     (== (answer let-args-vals store) v/s)
 	     (exts-envo ids addrs env env^)
 	     (exts-storeo addrs let-args-vals store store^)
-	     (map-relo numbero addrs)
-	     (map-relo symbolo ids)
-	     (map-relo (not-in-storeo store) addrs)
+	     (number*o addrs)
+	     (symbol*o ids)
+	     (not-in-storeo store addrs)
 	     (eval-scm-auxo body env^ store^ k mc out v-out)
 	     )]
      )))
+
 (define (eval-list-scmo exp* env store cont mc out v-out*)
   (conde
    [(fresh (ans)
@@ -488,7 +580,27 @@
 	   (== (cons v1 v-rst) v-out*)
 	   (eval-scm-auxo exp env store
 			  (list 'eval-list-k (list exp-rst env v-rst) cont)
-			  out v1))]))
+			  mc out v1))]))
+(define (apply-subro subr-name vals store cont mc out v-out)
+  (conde
+   [(fresh (a d)
+	   (== subr-name 'cons)
+	   (== (list a d) vals)
+	   (== v-out (cons a d))
+	   (apply-ko cont (answer v-out store) mc out))]
+   [(fresh (a d)
+	   (== (list (cons a d)) vals)
+	   (conde
+	    [(== subr-name 'car)
+	     (== v-out a)]
+	    [(== subr-name 'cdr)
+	     (== v-out d)])
+	   (apply-ko cont (answer v-out store) mc out))]
+   [(fresh (a d)
+	   (== subr-name 'null?)
+	   (== (list '()) vals)
+	   (== v-out #t)
+	   (apply-ko cont (answer v-out store) mc out))]))
 (define (apply-fsubro fsubr-name args env store cont mc out v-out)
   (conde
    [(fresh (x e v-out-ignore)
@@ -541,7 +653,6 @@
 	   (eval-list-scmo bodies env^ store
 			   (list 'let-k (list ids) cont)
 			   mc out bodies-vals))]
-   ;; eval first let-arg, with env, 
    ))
 (define (let-ids-bodies pairs ids bodies)
   (conde
@@ -558,9 +669,9 @@
   (fresh (addrs env^ store^)
 	 (exts-envo paras addrs env env^)
 	 (exts-storeo addrs vals store store^)
-	 (map-relo numbero addrs)
-	 (map-relo symbolo paras)
-	 (map-relo (not-in-storeo store) addrs)
+	 (number*o addrs)
+	 (symbol*o paras)
+	 (not-in-storeo store addrs)
 	 (eval-scm-auxo body env^ store^ cont mc out v-out) 
 	 ))
 (define (apply-muso-reifier paras body args env store cont mc out $)
@@ -575,19 +686,7 @@
 	 (eval-gexp-auxo body s/c-res upper-env upper-store upper-cont upper-meta-cont out $)
 	 ))
 
-#|
 
-    [(fresh (id params geb ge ge* env^)
-       (== `(letrec-rel ((,id ,params ,geb)) ,ge . ,ge*) expr)
-       (symbolo id)
-       (== `((rec (closr ,id ,params (delay ,geb))) . ,env) env^)
-       (eval-gexpro `(conj* ,ge . ,ge*) s/c env^ mc $))]    
-    [(fresh (id params body-expr ge ge* env^)
-       (== `(letrec-func ((,id ,params ,body-expr)) ,ge . ,ge*) expr)
-       (symbolo id)
-       (== `((rec (scheme-closr ,id ,params ,body-expr)) . ,env) env^)
-       (eval-gexpro `(conj* ,ge . ,ge*) s/c env^ mc $))]
-|#
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;; Interfacing with Scheme ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -622,19 +721,15 @@
        (== `(,a . ,d) $)
        (== $ $1)
        (=/= 'delayed a))]
-    [(fresh (ge s/c env $2)
-       (== `(delayed eval ,ge ,s/c ,env) $)
-       (eval-gexpro ge s/c env mc $2)
-       (pullo $2 mc $1))]
     [(fresh ($a $b $a1 $2)
        (== `(delayed mplus ,$a ,$b) $)
        (pullo $a mc $a1)
        (mpluso $b $a1 $2)
        (pullo $2 mc $1))]
-    [(fresh (saved-ge saved-env saved-$ saved-$1 $2)
-       (== `(delayed bind ,saved-$ ,saved-ge ,saved-env) $)
+    [(fresh (saved-ge saved-env saved-store saved-$ saved-$1 $2 $-tmp)
+       (== `(delayed bind ,saved-$ ,saved-ge ,saved-env ,saved-store) $)
        (pullo saved-$ mc saved-$1)
-       (bindo saved-$1 saved-ge saved-env mc $2)
+       (bindo saved-$1 saved-ge saved-env saved-store 'id-cont mc $2 $-tmp)
        (pullo $2 mc $1))]))
 
 (define (take-allo $ mc s/c*)
@@ -709,6 +804,40 @@
          (reify-state/1st-varo a va)
          (reifyo d vd))]))
 
+(define micro-init-env
+  '((==mk conj disj call/fresh
+	  rel-abs muo muos meaning-scm
+	  meaning-mk)
+    (1 2 3 4)))
+(define micro-init-store
+  '((1 2 3 4)
+    ((rel-subr ==mk)
+     (rel-subr conj)
+     (rel-subr disj)
+     (rel-subr call/fresh)
+     (rel-subr rel-abs)
+     (rel-subr muo)
+     (rel-subr muos)
+     (rel-subr meaning-scm)
+     (rel-subr meaning-mk)
+     )))
+(define mini-init-env micro-init-env)
+(define mini-init-store micro-init-store)
+
+(define scm-init-env
+  '((set! lambda list muso meaning-scm meaning-mk let letrec)
+    (1 2 3 4)))
+(define scm-init-store
+  '((1 2 3 4)
+    ((fsubr set!)
+     (fsubr lambda)
+     (fsubr list)
+     (fsubr muso)
+     (fsubr meaning-scm)
+     (fsubr meaning-mk)
+     (fsubr let)
+     (fsubr letrec))))
+
 (define (meta-cont-forceo mc fc)
   (conde
     [(fresh (level)
@@ -719,25 +848,24 @@
        (=/= a 'next-meta-cont)
        (== mc fc))]))
 (define (gen-meta-conto level mc)
-  (== `((kanren ,mini-init-env ,mini-init-store ,init-cont)
-	(kanren ,micro-init-env ,micro-init-store ,init-cont)
-	(scheme ,scm-init-env ,scm-init-store ,init-cont)
+  (== `((kanren ,mini-init-env ,mini-init-store id-cont)
+	(kanren ,micro-init-env ,micro-init-store id-cont)
+	(scheme ,scm-init-env ,scm-init-store id-cont)
 	. (next-meta-cont ,level)) mc))
 
 (define (runo answer-count gexp out)
   (fresh (mc)
-    (gen-meta-conto 'zero mc)
+    (gen-meta-conto peano-zero mc)
     (conde
      [(fresh (lvar $ s/c*)
              (symbolo lvar)
-	     (== answer-count '*)
-	     (eval-gexp-auxo gexp s/c env store cont mc out v-out)
-             (eval-gexpro gexp `(,empty-s . ,peano-zero) init-env init-store 'id-cont mc $ $)
+	     (== answer-count 'all)
+             (eval-gexp-auxo gexp `(,empty-s . ,peano-zero) init-env init-store 'id-cont mc $ $)
              (take-allo $ mc s/c*)
              (reifyo s/c* out))]
      [(fresh (n lvar ge ge* $ s/c*)
              (symbolo lvar)
-	     (=/= answer-count '*)
-             (eval-gexpro gexp `(,empty-s . ,peano-zero) init-env mc $)
+	     (=/= answer-count 'all)
+             (eval-gexp-auxo gexp `(,empty-s . ,peano-zero) init-env init-store 'id-cont mc $ $)
              (take-no answer-count $ mc s/c*)
              (reifyo s/c* out))])))
