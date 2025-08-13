@@ -1,3 +1,30 @@
+;; difference between this file and relational-cesk:
+;; added lookup for s/c
+;; addresses represented by peano numbers
+
+(define debug #f)
+(define debug-printfo
+  (lambda args
+    (lambda (st)
+  (if debug
+      (begin
+        (apply printf (map (lambda (x) (walk* x (state-S st))) args))
+        st)
+      st))))
+
+
+(define peano-zero '())
+(define (peano-incr n) `(,n))
+(define (peano n)
+  (if (zero? n) '() `(,(peano (- n 1)))))
+(define (peano-no n)
+  (conde
+   [(== peano-zero n)]
+   [(fresh (n-d)
+	   (== (peano-incr n-d) n)
+	   (peano-no n-d))]))
+	 
+
 (define empty-s/c '(() ()))
 (define empty-env '(() ()))
 (define empty-store '(() ()))
@@ -38,8 +65,8 @@
     (fresh (x* addr*)
 	   (== `(,x* ,addr*) env)
 	   (== `((,x . ,x*) (,addr . ,addr*)) env^)
-	   (symbolo x)
-	   (numbero addr))))
+	   ;;(peano-no addr)
+	   (symbolo x))))
 (define exts-storeo
   (lambda (addrs vs store store^)
     (conde
@@ -57,7 +84,8 @@
     (fresh (addr* v*)
 	   (== `(,addr* ,v*) store)
 	   (== `((,addr . ,addr*) (,v . ,v*)) store^)
-	   (numbero addr))))
+	   ;;(peano-no addr)
+	   )))
 
 (define x*/addr*-envo
   (lambda (x* a* env)
@@ -94,7 +122,10 @@
   (lambda (x env store t)
     (fresh (addr)
 	   (symbolo x)
-	   (numbero addr)
+	   ;;(peano-no addr)
+	   (debug-printfo
+	    "\nlookupo:\n x: ~s\n env: ~s\n store: ~s\n t: ~s\n\n"
+	    x env store t)
 	   (lookup-env-auxo x env store addr)
 	   (lookup-store-auxo addr store t))))
 
@@ -108,9 +139,12 @@
 	   (== `((,addr-s . ,addr-s*) (,v-s . ,v-s*)) store)
 	   (symbolo x)
 	   (symbolo y)
-	   (numbero t)
-	   (numbero addr-e)
-	   (numbero addr-s)
+	   ;;(peano-no t)
+	   ;;(peano-no addr-e)
+	   ;;(peano-no addr-s)
+	   (debug-printfo
+	    "\nlookup-env-auxo:\n x: ~s\n env: ~s\n store: ~s\n addr: ~s\n\n"
+	    x env store t)
 	   (conde
             ((== y x) (== addr-e t))
             ((=/= y x)
@@ -122,8 +156,8 @@
 	   (== `((,y . ,y*) (,addr-e . ,addr-e*)) env)
 	   (symbolo x)
 	   (symbolo y)
-	   (numbero t)
-	   (numbero addr-e)
+	   ;;(peano-no t)
+	   ;;(peano-no addr-e)
 	   (conde
             ((== y x) (== addr-e t))
             ((=/= y x)
@@ -133,8 +167,11 @@
   (lambda (addr store t)
     (fresh (addr-s addr-s* v-s v-s*)
 	   (== `((,addr-s . ,addr-s*) (,v-s . ,v-s*)) store)
-	   (numbero addr)
-	   (numbero addr-s)
+	   ;;(peano-no addr)
+	   ;;(peano-no addr-s)
+	   (debug-printfo
+	    "\nlookup-store-auxo:\n x: ~s\n env: ~s\n t: ~s\n\n"
+	    addr store t)
 	   (conde
             ((== addr-s addr) (== v-s t))
             ((=/= addr-s addr)

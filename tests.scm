@@ -16,7 +16,7 @@
                      'tested-expression expected produced))))))))
 ;; tests layout
 ;; 0. tests for helper relations
-;; 1. tests involving no tower, just relational leve
+;; 1. tests involving no tower, just relational level
 ;; 2. tests involving going up one level, to another relational level
 ;; 3. tests involving going up two levels, testing the functional level
 ;; 4. tests involving going up and down
@@ -25,7 +25,8 @@
 ;; tests for helper relations
 
 (test "lookupo-1"
-      (run* (q) (lookupo 'a '((b a a) (3 2 1)) '((3 2 1) (3 5 6)) q))
+      (run* (q) (lookupo 'a `((b a a) ,(map peano (list 3 2 1)))
+			 `(,(map peano (list 3 2 1)) (3 5 6)) q))
       '(5))
 
 
@@ -35,8 +36,8 @@
 		   (gen-meta-conto peano-zero mc)
 		   (eval-list-scmo
 		    '(5 a 7)
-		    '((a) (1))
-		    '((1) (catte))
+		    `((a) (,(peano 1)))
+		    `((,(peano 1)) (catte))
 		    'id-cont
 		    mc
 		    out
@@ -48,8 +49,8 @@
 		   (gen-meta-conto peano-zero mc)
 		   (eval-scm-auxo
 		    8
-		    '((a) (1))
-		    '((1) (catte))
+		    `((a) (,(peano 1)))
+		    `((,(peano 1)) (catte))
 		    'id-cont
 		    mc
 		    out
@@ -96,61 +97,69 @@
 		    out
 		    q)))
       '(((mouse) catte 7)))
+;; car cdr set! let letrec
+;; if define case cond
 
 ;; tests involving no tower
 
-;(run 2 (out)
- ;    (eval-programo
-  ;    '(fresh (a b) (conj (== a b) (== b 3)))
-   ;   out))
-
 (test "runo-1"
-  (run* (out) (runo 'all '(fresh (b) (== 42 b)) out))
-  '(42))
-
+  (run* (out) (runo 'all '(call/fresh (b) (==mk 42 b)) out))
+  '((42)))
 (test "runo-2"
-  (run* (a) (runo 'all '(fresh (b) (== (quote cat) b)) a))
-  '(cat))
+      (run* (out) (runo 'all
+			'(call/fresh
+			  (a) (call/fresh
+			       (b) (call/fresh
+				    (c) (conj (==mk 42 b) (conj (==mk 100 c) (==mk a (b c))))))) out))
+      '(((42 100))))
 
 (test "runo-3"
-  (run* (a) (runo (peano 5) '(fresh (b) (symbolo b) (== (quote cat) b)) a))
-  '(cat))
+ (run* (a) (runo 'all '(call/fresh (b) (==mk 5 5)) a))
+  '(((_.))))
 
 (test "runo-4"
-  (run* (a) (runo (peano 5) '(fresh (b) (symbolo b)) a))
-  '((_.0 (sym _.0))))
+      (run* (out) (runo 'all
+			'(call/fresh
+			  (a) (call/fresh
+			       (b) (call/fresh
+				    (c) (conj (==mk 42 b)
+					      (conj (==mk 100 c)
+						    (disj (==mk a b)
+							  (==mk a (b c)))))))) out))
+      '((42 (42 100))))
 
 (test "runo-5"
-  (run* (a) (runo (peano 5) '(fresh (b) (numbero b)) a))
-  '((_.0 (num _.0))))
-
+      (run* (out) (runo 'all
+			'(call/fresh
+			  (tm3) (call/fresh
+			       (tm2) (call/fresh
+				    (tm1)
+				    (==mk (tm2 tm3) (42 (42 tm2)))))) out))
+      '(((42 42))))
+#|
+eval-gexp:
+ rel-e: ==mk
+ args: ((tm2 tm3) (42 (42 tm2)))
+ s/c: (() ((())))
+ env: ((tm1 tm2 tm3 ==mk conj disj call/fresh rel-abs muo muos meaning-scm meaning-mk open-scm open-mk) (#((unbound) (scope) 9527) #((unbound) (scope) 9206) #((unbound) (scope) 8905) 11 10 9 8 7 6 5 4 3 2 1))
+ store: ((#((unbound) (scope) 9527) #((unbound) (scope) 9206) #((unbound) (scope) 8905) 11 10 9 8 7 6 5 4 3 2 1) ((var (())) (var ()) (var) (rel-subr ==mk) (rel-subr conj) (rel-subr disj) (rel-subr call/fresh) (rel-subr rel-abs) (rel-subr muo) (rel-subr muos) (rel-subr meaning-scm) (rel-subr meaning-mk) (rel-subr open-scm) (rel-subr open-mk)))
+ cont: id-cont
+ v-out: #((unbound) (scope) 8765)
+|#
 (test "runo-6"
-  (run* (a) (runo (peano 5) '(fresh (b) (symbolo b) (numbero b)) a))
-  '())
+      (run* (out) (runo 'all
+			'(call/fresh
+			  (a) (call/fresh
+			       (b) ((rel-abs (tm1 tm2 tm3) (==mk (tm2 tm3) (tm1 (tm1 tm2))))
+			  42 b a))) out))
+      '(((42 42))))
+;; rel-abs, let
 
-(test "runo-6a"
- (run* (a) (runo (peano 5) '(fresh (b) (== 5 5)) a))
-  '(_.0))
-
-(test "runo-6b"
- (run* (a) (runo (peano 5) '(fresh (b) (== 5 5)) 42))
-  '(_.0))
-
-(test "runo-7"
- (run* (a) (runo (peano 5) '(fresh (b) (== (list 'cat 'dog) b)) a))
-  '((cat dog)))
-
-(test "runo-7b"
- (run* (a) (runo 'all '(fresh (b) (=/= (list 'cat 'dog) b) (== (list 'cat 'dog) b)) a))
-  '())
-
-(test "runo-7c"
- (run* (a) (runo 'all '(fresh (b) (== (list 'cat 'dog) b) (=/= (list 'cat 'dog) b)) a))
- '())
+;;|#
 
 ;; tests involving going up one level, to another relational level
-;;(fresh (a b c) ((muo (e s/c r st k) (meaning-mk e s/c r st k)) ge1 ge2 ..))
+;;(call/fresh (a b c) ((muo (e s/c r st k) (meaning-mk e s/c r st k)) ge1 ge2 ..))
 ;; tests involving going up two levels, testing the functional level
-;;(fresh (a b c) ((muo (e s/c r st k) ((muos (e s/c r st k) scm) ge2)) ge1)
+;;(call/fresh (a b c) ((muo (e s/c r st k) ((muos (e s/c r st k) scm) ge2)) ge1)
 ;; tests involving going up and down
 
