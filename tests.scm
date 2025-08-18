@@ -23,7 +23,7 @@
 
 
 ;; tests for helper relations
-
+#|
 (test "lookupo-1"
       (run* (q) (lookupo 'a `((b a a) ,(map peano (list 3 2 1)))
 			 `(,(map peano (list 3 2 1)) (3 5 6)) q))
@@ -146,6 +146,7 @@ eval-gexp:
  cont: id-cont
  v-out: #((unbound) (scope) 8765)
 |#
+
 (test "runo-6"
       (run* (out) (runo 'all
 			'(call/fresh
@@ -153,11 +154,69 @@ eval-gexp:
 			       (b) ((rel-abs (tm1 tm2 tm3) (==mk (tm2 tm3) (tm1 (tm1 tm2))))
 			  42 b a))) out))
       '(((42 42))))
+
+
 ;; rel-abs, let
 
-;;|#
+;;
 
 ;; tests involving going up one level, to another relational level
+
+(test "muo-1"
+      (run 1 (out) (runo 'all
+			'(call/fresh
+			  (a) (call/fresh
+			       (b) ((muo (e s/c r st k) (call/fresh (tm) (==mk tm e)))
+			  42 b a))) out))
+      '(((42 b a))))
+;;
+(test "muo-2"
+      (run 1 (out) (runo 'all
+			'(call/fresh
+			  (a) (call/fresh
+			       (b) ((muo (e s/c r st k)
+					 (call/fresh (tm)
+						     (==mk tm (e s/c r st k))))
+			  42 b a))) out))
+      '(((42 b a))))
+|#
+(test "meaning-mk-1"
+      (run 1 (out) (runo 'all
+			'(call/fresh
+			  (a) (call/fresh
+			       (b) ((muo (e s/c r st k)
+					 (call/fresh (tm)
+						     (conj (meaning-mk e s/c r st k)
+							   (eval-scmo '(rei-lookup 'a r st) tm))))
+				    conj (==mk 42 b) (==mk a (b (b 3)))
+				    ))) out))
+      '(((42 (42 3)))))
+;; runo might not be good, the idea of using first fresh var
+;; maybe need some ideas from reifyo in different levels
+
+;; meaning is correct, it should be used this way (evaluate to a stream)
+;; but we can add a run-mk so that (run-mk e s/c r st k) can be placed in a ==mk
+;; or a call to a rel-abs; this make it more convient to use
+
+;; also need something operating on reified s/c, r, and st, to unify vars across levels
+
+#|
+problem: across levels, variables have different counters
+we can give vars additional counter based on levels, but this doesn't work if we have multiple
+copies of same level (if we go to meta level, use the r and st, but make a init-s/c for meaning
+then the counter is reset to 0 in the new level, yet we have a store that have var collision)
+
+maybe three counters, one is counter within level, two is recording which level, three is
+the occurence that a level of this level is generated
+
+we need to record all calls to meaning, or make sure to update s/c by checking the env and store?
+
+if the s/c, env, store supplied to meaning are already polluted, then there's nothing we can do
+assume they are valid, then generating new things just involves finding largest and update
+|#
+ 
+
+
 ;;(call/fresh (a b c) ((muo (e s/c r st k) (meaning-mk e s/c r st k)) ge1 ge2 ..))
 ;; tests involving going up two levels, testing the functional level
 ;;(call/fresh (a b c) ((muo (e s/c r st k) ((muos (e s/c r st k) scm) ge2)) ge1)

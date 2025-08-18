@@ -2,11 +2,11 @@
 ;; added lookup for s/c
 ;; addresses represented by peano numbers
 
-(define debug #f)
-(define debug-printfo
+(define debug-lookup #f)
+(define debug-lookupo
   (lambda args
     (lambda (st)
-  (if debug
+  (if debug-lookup
       (begin
         (apply printf (map (lambda (x) (walk* x (state-S st))) args))
         st)
@@ -23,7 +23,13 @@
    [(fresh (n-d)
 	   (== (peano-incr n-d) n)
 	   (peano-no n-d))]))
-	 
+(define (peano-iotao n lst)
+  (conde
+   [(== peano-zero n) (== '() lst)]
+   [(fresh (n-d lst-d)
+	   (== (peano-incr n-d) n)
+	   (== (cons n lst-d) lst)
+	   (peano-iotao n-d lst-d))]))
 
 (define empty-s/c '(() ()))
 (define empty-env '(() ()))
@@ -123,7 +129,7 @@
     (fresh (addr)
 	   (symbolo x)
 	   ;;(peano-no addr)
-	   (debug-printfo
+	   (debug-lookupo
 	    "\nlookupo:\n x: ~s\n env: ~s\n store: ~s\n t: ~s\n\n"
 	    x env store t)
 	   (lookup-env-auxo x env store addr)
@@ -142,7 +148,7 @@
 	   ;;(peano-no t)
 	   ;;(peano-no addr-e)
 	   ;;(peano-no addr-s)
-	   (debug-printfo
+	   (debug-lookupo
 	    "\nlookup-env-auxo:\n x: ~s\n env: ~s\n store: ~s\n addr: ~s\n\n"
 	    x env store t)
 	   (conde
@@ -169,7 +175,7 @@
 	   (== `((,addr-s . ,addr-s*) (,v-s . ,v-s*)) store)
 	   ;;(peano-no addr)
 	   ;;(peano-no addr-s)
-	   (debug-printfo
+	   (debug-lookupo
 	    "\nlookup-store-auxo:\n x: ~s\n env: ~s\n t: ~s\n\n"
 	    addr store t)
 	   (conde
