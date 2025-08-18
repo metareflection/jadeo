@@ -1,12 +1,4 @@
-;;any term returning expressions inside
-;; can we put meaning inside == if inside it evaluates a scheme expr?
 
-;; debugging showing out is tm, why?
-#|
-the main issue is meaning scheme and abstractions and reifiers (and perhaps apply cont)
-
-these don't return a stream so might be better to place in the scheme level
-|#
 (load "lookupo-lib.scm")
 ;;(load "mk-lib.scm")
 (load "mk-vicare.scm")
@@ -130,7 +122,6 @@ these don't return a stream so might be better to place in the scheme level
 		  (== `(,a . ,d) v)
 		  (=/= 'var a))
 	   (== #f s1)]
-	  ;; 2 same var, 1 pair case (different vars for a d for unbound and f), 1 nil case, 1 true 1 false cases, 2 different 3615 and 3614 var cases (but seems to be the same since s1 is unbound for one and #f for the other)
 	  [(symbolo u) (var?o v) (ext-so v u s s1)]
 	  [(symbolo u) (numbero v) (== #f s1)]
 	  [(symbolo u) (symbolo v) (== u v) (== s s1)]
@@ -311,7 +302,6 @@ these don't return a stream so might be better to place in the scheme level
            (debug-gexpo
 	    "\napply-rel-ko id-cont 1:\n val/store: ~s\n out: ~s\n\n"
 	    val/store out)
-	   ;; debugging showing out is tm, why?
 	   (== (cons lv val/store) out)
 	   (debug-gexpo
 	    "\napply-rel-ko id-cont 2:\n val/store: ~s\n out: ~s\n\n"
@@ -798,13 +788,11 @@ args: ~s\n k: ~s\n out: ~s\n v-out: ~s\n\n"
        ;  ]
         ;[(=/= 'id-cont k)])      
       ;(eval-scm-auxo exp env s k ans mc v-out^))))
-;; expression * environment * state * continuation * (value * state) * value -> goal
+
 ;; v-out is the value of exp under environment env and store s,
 ;; out is final value-state pair after applying continuation k
 (define eval-scm-auxo
   (lambda (exp env store cont mc out v-out)
-   ;; (display (list 'eval-scm-auxo exp env store cont mc out v-out))
-    ;;(display "\n")
     (conde
      [(fresh (val ans)
 	     (== exp v-out)
@@ -828,13 +816,10 @@ args: ~s\n k: ~s\n out: ~s\n v-out: ~s\n\n"
 
 (define apply-ko
   (lambda (cont v/s mc out)
-    ;;(display (list 'apply-ko cont v/s mc out))
-    ;;(display "\n")
     (conde
      [(fresh (v s level)
              (== 'id-cont cont)
-	     ;;(== mc `(next-meta-cont ,level))
-             (== v/s out)
+	     (== v/s out)
              (== (answer v s) v/s))]
      
      [(fresh (fval args env store k v-out)
@@ -982,7 +967,6 @@ args: ~s\n k: ~s\n out: ~s\n v-out: ~s\n\n"
 	   (== (answer v-out store) ans)
 	   (apply-ko cont ans mc out))]))
 (define (apply-fsubro fsubr-name args env store cont mc out v-out)
-  ;;(display (list 'apply-fsubro fsubr-name args "\n"))
   (conde
    [(fresh (ans)
 	   (== 'quote fsubr-name)
@@ -1051,14 +1035,7 @@ args: ~s\n k: ~s\n out: ~s\n v-out: ~s\n\n"
 	   (eval-list-scmo bodies env store
 			   (list 'let-k (list ids) cont)
 			   mc out bodies-vals))]
-   [(fresh (pairs body ids bodies bodies-vals)
-	   (== 'letrec fsubr-name)
-	   (== (list pairs body) args)
-	   (let-ids-bodies pairs ids bodies)
-	   ;;(ext-envo ids '() env env^)
-	   (eval-list-scmo bodies env store
-			   (list 'let-k (list ids) cont)
-			   mc out bodies-vals))]
+
    ))
 (define (let-ids-bodies pairs ids bodies)
   (conde
@@ -1246,7 +1223,7 @@ args: ~s\n k: ~s\n out: ~s\n v-out: ~s\n\n"
     ))
 
 (define scm-init-env-names
-  '(quote set! lambda list muso meaning-scm meaning-mk new-mk rei-lookup let letrec))
+  '(quote set! lambda list muso meaning-scm meaning-mk new-mk rei-lookup let))
 (define scm-init-store-contents
   '((fsubr quote)
     (fsubr set!)
@@ -1257,8 +1234,7 @@ args: ~s\n k: ~s\n out: ~s\n v-out: ~s\n\n"
     (fsubr meaning-mk)
     (fsubr new-mk)
     (fsubr rei-lookup)
-    (fsubr let)
-    (fsubr letrec)))
+    (fsubr let)))
 (define (iota n)
   (if (= n 0) '()
       (cons n (iota (- n 1)))))
