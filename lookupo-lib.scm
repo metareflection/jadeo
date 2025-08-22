@@ -31,6 +31,40 @@
 	   (== (cons n lst-d) lst)
 	   (peano-iotao n-d lst-d))]))
 
+(define (lengtho l len)
+  (conde
+    [(== '() l) (== '() len)]
+    [(fresh (a d len-d)
+       (== `(,a . ,d) l)
+       (== `(,len-d) len)
+       (lengtho d len-d))]))
+
+(define (gen-addro env store new-addr)
+  (fresh (names addrs vals addr)
+	 (== (list names addrs) env)
+	 (== (list addrs vals) store)	 
+	 (lengtho names addr)
+	 (lengtho addrs addr)
+	 (lengtho vals addr)
+	 (== (peano-incr addr) new-addr)
+	 ))
+(define (gen-addr*o env store len new-addr*)
+  (fresh (start-addr len-d)
+	 (gen-addro env store start-addr)
+	 (== (peano-incr len-d) len)
+	 (gen-addr*-auxo (list start-addr) len-d new-addr*)))
+(define (gen-addr*-auxo addr* len new-addr*)
+  (conde
+   [(== len peano-zero)
+    (== addr* new-addr*)]
+   [(fresh (len-d addr addr^ addr*-rst addr*^)
+	   (== (peano-incr len-d) len)
+	   (== (peano-incr addr) addr^)
+	   (== (cons addr addr*-rst) addr*)
+	   (== (cons addr^ addr*) addr*^)
+	   (gen-addr*-auxo addr*^ len-d new-addr*))]))
+
+
 (define empty-s/c '(() ()))
 (define empty-env '(() ()))
 (define empty-store '(() ()))
@@ -54,6 +88,21 @@
 	   (== `(,x* ,tm*) s/c)
 	   (== `((,x . ,x*) (,tm . ,tm*)) s/c^)
 	   (symbolo x))))
+(define (exts-env-storeo env store para* val* env^ store^)
+  (fresh (arg-num addr*)
+	 (debug-lookupo
+	  "\nexts-env-storeo:\n env: ~s\n store: ~s\n para*: ~s\n val*: ~s\n\n"
+	  env store para* val*)
+	 (lengtho para* arg-num)
+	 (gen-addr*o env store arg-num addr*)
+	 (exts-envo para* addr* env env^)
+	 (exts-storeo addr* val* store store^)
+	 ;;(peano*o addr*)
+	 (symbol*o para*)
+	 (not-in-store*o store addr*)))
+
+
+
 (define exts-envo
   (lambda (xs addrs env env^)
     (conde
