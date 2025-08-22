@@ -519,8 +519,16 @@ args: ~s\n k: ~s\n out: ~s\n v-out: ~s\n\n"
 	   (== (cons sub count) s/c)
 	   (tm-lookupo (list e out-para) env store (list e^ out^))
 	   (get-meta-level mc (peano-incr lv))
+	   (debug-gexpo
+	    "\neval-scmo 0:\n e^: ~s\n 
+env^: ~s\n store^: ~s\n out: ~s\n v-out: ~s\n\n"
+	    e^ env store out v-out)
 	   (mk-r/st-to-scm-r/sto env store env^ store^)
 	   (== (list 'unify-with-k (list out^ s/c) cont) cont^)
+	   (debug-gexpo
+	    "\neval-scmo 1:\n e^: ~s\n 
+env^: ~s\n store^: ~s\n out: ~s\n v-out: ~s\n\n"
+	    e^ env^ store^ out v-out)
 	   (walko e^ sub e^^)
 	   (meaning-scm-o e^^ env^ store^ 'exit-level-k
 			  (list 'kanren lv s/c env store cont^)
@@ -560,7 +568,7 @@ args: ~s\n k: ~s\n out: ~s\n v-out: ~s\n\n"
             [(=/= #f sub^) (== `((,sub^ . ,count)) v-out)])
 	   (add-exit-lv-conto k^ k^^)
 	   (debug-gexpo
-	    "\nadd-exit-lv-conto 0:\n k^^: ~s\n k-out^: ~s\n\n"
+	    "\nadd-exit-lv-conto 1:\n k^^: ~s\n k-out^: ~s\n\n"
 	    k^^ k-out^)
 	   (unifyo k^^ k-out^ sub sub^)
 	   (== (answer v-out store) ans)
@@ -622,8 +630,12 @@ args: ~s\n k: ~s\n out: ~s\n v-out: ~s\n\n"
 		new-name* new-content* len)
 	 (== (list name* addr*) env)
 	 (== (list addr* content*) store)
+	 (debug-gexpo
+	  "\nmk-r/st-to-scm-r/sto 0:\n name*: ~s\n addr*: ~s\n content*: ~s\n\n"
+	  name* addr* content*)
 	 (== (list name*^ addr*^) env^)
 	 (== (list addr*^ content*^) store^)
+	 
 	 (appendo new-name* mk-init-env-names name*)
 	 (appendo new-content* mk-init-store-contents content*)
 	 (appendo new-name* scm-init-env-names name*^)
@@ -1343,6 +1355,9 @@ args: ~s\n k: ~s\n out: ~s\n v-out: ~s\n\n"
 		,peano-zero ,init-s/c ,init-env
 		,init-store id-cont)
 	       . ,mc) mc^)
+	 (debug-gexpo
+	  "\nruno other start vars:\n gexp: ~s\n\n"
+	  gexp)
 	 (eval-gexp-auxo gexp init-s/c
 			 init-env init-store 'id-cont mc lv/v-out v-out)
 	 (conde

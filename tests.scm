@@ -224,7 +224,7 @@
 				  42 b a)) out))
       '((level: (()) result: ((() (()))))))
 ;;
-#|
+
 (test "muo-2"
       (run 1 (out) (runo 'all
 			'(call/fresh
@@ -233,7 +233,7 @@
 					 (call/fresh (tm)
 						     (==mk tm (e s/c r st k))))
 				    42 b a))) out))
-      '((level: (()) result: (((42 b a) (() (())) ((b a ==mk conj disj call/fresh fresh conj* conde rel-abs muo muos meaning-scm meaning-mk eval-scm eval-scmo new-scm new-mk apply-cont-jmp apply-cont-psh) (((((((((((((((((((((())))))))))))))))))))) (((((((((((((((((((()))))))))))))))))))) 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)) ((((((((((((((((((((((())))))))))))))))))))) (((((((((((((((((((()))))))))))))))))))) 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1) ((_.) (_. ()) (rel-subr ==mk) (rel-subr conj) (rel-subr disj) (rel-subr call/fresh) (rel-subr fresh) (rel-subr conj*) (rel-subr conde) (rel-subr rel-abs) (rel-subr muo) (rel-subr muos) (rel-subr meaning-scm) (rel-subr meaning-mk) (rel-subr eval-scm) (rel-subr eval-scmo) (rel-subr new-scm) (rel-subr new-mk) (rel-subr apply-cont-jmp) (rel-subr apply-cont-psh))) id-cont)))))
+      '((level: (()) result: (((42 b a) (() (())) ((b a ==mk conj disj call/fresh fresh conj* conde rel-abs muo muos meaning-scm meaning-mk eval-scm eval-scmo new-scm new-mk apply-cont-jmp apply-cont-psh add-exit-lv-conto) ((((((((((((((((((((((()))))))))))))))))))))) ((((((((((((((((((((())))))))))))))))))))) 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)) (((((((((((((((((((((((()))))))))))))))))))))) ((((((((((((((((((((())))))))))))))))))))) 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1) ((_.) (_. ()) (rel-subr ==mk) (rel-subr conj) (rel-subr disj) (rel-subr call/fresh) (rel-subr fresh) (rel-subr conj*) (rel-subr conde) (rel-subr rel-abs) (rel-subr muo) (rel-subr muos) (rel-subr meaning-scm) (rel-subr meaning-mk) (rel-subr eval-scm) (rel-subr eval-scmo) (rel-subr new-scm) (rel-subr new-mk) (rel-subr apply-cont-jmp) (rel-subr apply-cont-psh) (rel-subr add-exit-lv-conto))) id-cont)))))
 
 (test "muo-3"
       (run 1 (out) (runo 'all
@@ -244,9 +244,9 @@
 						   1 2 3 4)))
 				  a b c d))
 			 out))
-      '((level: ((())) result: (env: ((b k st r s/c e ==mk conj disj call/fresh fresh conj* conde rel-abs muo muos meaning-scm meaning-mk eval-scm eval-scmo new-scm new-mk apply-cont-jmp apply-cont-psh) (((((((((((((((((((((((((())))))))))))))))))))))))) (((((((((((((((((((()))))))))))))))))))) ((((((((((((((((((((())))))))))))))))))))) (((((((((((((((((((((()))))))))))))))))))))) ((((((((((((((((((((((())))))))))))))))))))))) (((((((((((((((((((((((()))))))))))))))))))))))) 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)) store: ((((((((((((((((((((((((((())))))))))))))))))))))))) (((((((((((((((((((()))))))))))))))))))) ((((((((((((((((((((())))))))))))))))))))) (((((((((((((((((((((()))))))))))))))))))))) ((((((((((((((((((((((())))))))))))))))))))))) (((((((((((((((((((((((()))))))))))))))))))))))) 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1) ((var (()) ()) id-cont (((((((((((((((((((((()))))))))))))))))))) 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1) ((var () ()) (rel-subr ==mk) (rel-subr conj) (rel-subr disj) (rel-subr call/fresh) (rel-subr fresh) (rel-subr conj*) (rel-subr conde) (rel-subr rel-abs) (rel-subr muo) (rel-subr muos) (rel-subr meaning-scm) (rel-subr meaning-mk) (rel-subr eval-scm) (rel-subr eval-scmo) (rel-subr new-scm) (rel-subr new-mk) (rel-subr apply-cont-jmp) (rel-subr apply-cont-psh))) ((a ==mk conj disj call/fresh fresh conj* conde rel-abs muo muos meaning-scm meaning-mk eval-scm eval-scmo new-scm new-mk apply-cont-jmp apply-cont-psh) ((((((((((((((((((((()))))))))))))))))))) 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)) (() ()) (a b c d) (rel-subr ==mk) (rel-subr conj) (rel-subr disj) (rel-subr call/fresh) (rel-subr fresh) (rel-subr conj*) (rel-subr conde) (rel-subr rel-abs) (rel-subr muo) (rel-subr muos) (rel-subr meaning-scm) (rel-subr meaning-mk) (rel-subr eval-scm) (rel-subr eval-scmo) (rel-subr new-scm) (rel-subr new-mk) (rel-subr apply-cont-jmp) (rel-subr apply-cont-psh)))))))
+      '((level: ((())) result: (env: ((b k st r s/c e ==mk conj disj call/fresh fresh conj* conde rel-abs muo muos meaning-scm meaning-mk eval-scm eval-scmo new-scm new-mk apply-cont-jmp apply-cont-psh add-exit-lv-conto) ((((((((((((((((((((((((((()))))))))))))))))))))))))) ((((((((((((((((((((())))))))))))))))))))) (((((((((((((((((((((()))))))))))))))))))))) ((((((((((((((((((((((())))))))))))))))))))))) (((((((((((((((((((((((()))))))))))))))))))))))) ((((((((((((((((((((((((())))))))))))))))))))))))) 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)) store: (((((((((((((((((((((((((((()))))))))))))))))))))))))) ((((((((((((((((((((())))))))))))))))))))) (((((((((((((((((((((()))))))))))))))))))))) ((((((((((((((((((((((())))))))))))))))))))))) (((((((((((((((((((((((()))))))))))))))))))))))) ((((((((((((((((((((((((())))))))))))))))))))))))) 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1) ((var (()) ()) id-cont ((((((((((((((((((((((())))))))))))))))))))) 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1) ((var () ()) (rel-subr ==mk) (rel-subr conj) (rel-subr disj) (rel-subr call/fresh) (rel-subr fresh) (rel-subr conj*) (rel-subr conde) (rel-subr rel-abs) (rel-subr muo) (rel-subr muos) (rel-subr meaning-scm) (rel-subr meaning-mk) (rel-subr eval-scm) (rel-subr eval-scmo) (rel-subr new-scm) (rel-subr new-mk) (rel-subr apply-cont-jmp) (rel-subr apply-cont-psh) (rel-subr add-exit-lv-conto))) ((a ==mk conj disj call/fresh fresh conj* conde rel-abs muo muos meaning-scm meaning-mk eval-scm eval-scmo new-scm new-mk apply-cont-jmp apply-cont-psh add-exit-lv-conto) (((((((((((((((((((((())))))))))))))))))))) 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)) (() ()) (a b c d) (rel-subr ==mk) (rel-subr conj) (rel-subr disj) (rel-subr call/fresh) (rel-subr fresh) (rel-subr conj*) (rel-subr conde) (rel-subr rel-abs) (rel-subr muo) (rel-subr muos) (rel-subr meaning-scm) (rel-subr meaning-mk) (rel-subr eval-scm) (rel-subr eval-scmo) (rel-subr new-scm) (rel-subr new-mk) (rel-subr apply-cont-jmp) (rel-subr apply-cont-psh) (rel-subr add-exit-lv-conto)))))))
 
-|#
+
 (test "muo-4"
       (run 1 (out) (runo 'all
 			 '(fresh (a)
@@ -273,18 +273,7 @@
 				  a b c d))
 			 out))
       '((level: ((())) result: (99 (42 24 (2222 4))))))
-#|
-(test "meaning-mk-1"
-      (run 1 (out) (runo 'all
-			 '(fresh (a b)
-				 ((muo (e s/c r st k)
-				       (fresh (tm)
-					      (meaning-mk e s/c r st k)
-					      (eval-scmo '(rei-lookup 'a r st) tm)))
-				  conj (==mk 42 b) (==mk a (b (b 3)))
-				  )) out))
-      '((level: (()) result: ((42 (42 3))))))
-|#
+
 (test "meaning-mk-1"
       (run 1 (out) (runo 'all
 			'(call/fresh
@@ -323,31 +312,28 @@
 				 ) out))
       '((level: () result: (((42 (42 3)) (42 3))))))
 
-#| what should a test involve
-fresh, conde, binding rel-abs and reifiers to identifiers and use them
-use meaning (inside reifiers is the only place that makes sense),
-or use eval-scm and eval-mk directly
+(test "meaning-mk-4"
+      (run 1 (out) (runo 'all
+			 '(fresh (a b c d e)
+				 (==mk e (b b 42 (b (c 29))))
+				 ((muo (e s/c r st k) (meaning-mk e s/c r st k))
+				  ==mk c 42)
+				 (conde
+				  [(==mk d c)
+				   ((muo (e s/c r st k) (meaning-mk e s/c r st k))
+				    ==mk (b b) ((d 23) b))]
+				  [(==mk d b)
+				   ((muo (e s/c r st k) (meaning-mk e s/c r st k))
+				    ==mk (d d) ((42 24) d))])
+				 ((muo (e s/c r st k) (meaning-mk e s/c r st k))
+				  ==mk a (e e))
+				 )
+			 out))
+      '((level: () result: ((((42 23) (42 23) 42 ((42 23) (42 29)))
+			     ((42 23) (42 23) 42 ((42 23) (42 29))))
+			    (((42 24) (42 24) 42 ((42 24) (42 29)))
+			     ((42 24) (42 24) 42 ((42 24) (42 29))))))))
 
-calls to reifiers must have non-id continuation, s/c already containing some sub,
-r and st already has new vars introduced and new reifier and rel-abs names bound to
-
-
-(fresh (a b c d e)
-       (== a (b b 42 (b (c 24))))
-       (muo )
-       (== c 42)
-       (conde
-	[(== d c)
-	 ((muo ))
-	 (== (b b) ((42 23) b))
-	 ]
-	[(== d b)
-	 ((muo ))
-	 (== (b b) ((42 23) b))
-	 ])
-       (muo )
-       (== e (a a)))
-|#
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 #|
@@ -411,8 +397,8 @@ cont for rel: stream of s/c -> meta-continuation -> (stream of s/c * store)
 cont for func: val (any val that can be returned from scheme exp) -> meta-cont -> val/store
 
 (fresh (a b)
-   ((muo (e s/c r st k) (meaning e s/c r st k)) == a b)
-   (== a 5))
+   ((muo (e s/c r st k) (meaning e s/c r st k)) ==mk a b)
+   (==mk a 5))
 
 k supplied to meaning is
 
