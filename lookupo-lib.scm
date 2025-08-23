@@ -39,18 +39,27 @@
        (== `(,len-d) len)
        (lengtho d len-d))]))
 
-(define (gen-addro env store new-addr)
+(define (gen-addro store new-addr)
   (fresh (names addrs vals addr)
-	 (== (list names addrs) env)
-	 (== (list addrs vals) store)	 
-	 (lengtho names addr)
+	 (debug-lookupo
+	  "\ngen-addro 0:\n store: ~s\n\n"
+	  store)
+	 (== (list addrs vals) store)
+	 (debug-lookupo
+	  "\ngen-addro 1:\n names: ~s\n addrs: ~s\n vals: ~s\n\n"
+	  names addrs vals)
 	 (lengtho addrs addr)
 	 (lengtho vals addr)
 	 (== (peano-incr addr) new-addr)
 	 ))
-(define (gen-addr*o env store len new-addr*)
+
+(define (gen-addr*o store len new-addr*)
   (fresh (start-addr len-d)
-	 (gen-addro env store start-addr)
+	  (debug-lookupo
+	  "\ngen-addr*o 0:\n store: ~s\n\n"
+	  store)
+	 (gen-addro store start-addr)
+	
 	 (== (peano-incr len-d) len)
 	 (gen-addr*-auxo (list start-addr) len-d new-addr*)))
 (define (gen-addr*-auxo addr* len new-addr*)
@@ -91,17 +100,32 @@
 (define (exts-env-storeo env store para* val* env^ store^)
   (fresh (arg-num addr*)
 	 (debug-lookupo
-	  "\nexts-env-storeo:\n env: ~s\n store: ~s\n para*: ~s\n val*: ~s\n\n"
+	  "\nexts-env-storeo 0:\n env: ~s\n store: ~s\n para*: ~s\n val*: ~s\n\n"
 	  env store para* val*)
 	 (lengtho para* arg-num)
-	 (gen-addr*o env store arg-num addr*)
+	 (debug-lookupo
+	  "\nexts-env-storeo 1:\n arg-num: ~s\n\n"
+	  arg-num)
+	 (gen-addr*o store arg-num addr*)
+	 (debug-lookupo
+	  "\nexts-env-storeo 2:\n env: ~s\n store: ~s\n para*: ~s\n val*: ~s\n\n"
+	  env^ store^ para* val*)
 	 (exts-envo para* addr* env env^)
 	 (exts-storeo addr* val* store store^)
+	 
 	 ;;(peano*o addr*)
 	 (symbol*o para*)
 	 (not-in-store*o store addr*)))
+(define (not-in-storeo store addr)
+  (fresh (addr*)
+	 ;;(peano-no addr)
+	 (store->addr*o store addr*)
+	 (absento addr addr*)))
 
-
+(define (not-in-store*o store addrs)
+  (fresh (addr*)
+	 (store->addr*o store addr*)
+	 (no-same-addrs addr* addrs)))
 
 (define exts-envo
   (lambda (xs addrs env env^)

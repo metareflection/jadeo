@@ -15,6 +15,7 @@
                (printf "Failed: ~s~%Expected: ~s~%Computed: ~s~%"
                      'tested-expression expected produced))))))))
 
+
 ;; tests for helper relations
 (test "lookupo-1"
       (run* (q) (lookupo 'a `((b a a) ,(map peano (list 3 2 1)))
@@ -106,6 +107,33 @@
 		    out
 		    q)))
       '((99 (42 24 (99 88 777)))))
+(test "eval-scm-auxo-5"
+      (run* (q)
+	    (fresh (mc out)
+		   (gen-meta-conto (peano 1) mc)
+		   (eval-scm-auxo
+		    '(letrec ([length-peano
+			       (lambda (lst)
+				 (if (null? lst)
+				     '()
+				     (cons (length-peano (cdr lst)) '())))])
+		       (list (length-peano (list 1 2 8 9))
+			     (length-peano (list 4 5 1 2 3 10 9 8))
+			     (length-peano (list 4))
+			     (length-peano '())))
+	            '((cons cdr null? letrec if lambda quote list a) (9 8 7 6 5 4 3 2 1))
+		    '((9 8 7 6 5 4 3 2 1)
+		      ((subr cons)
+		       (subr cdr)
+		       (subr null?)
+		       (fsubr letrec)
+		       (fsubr if) (fsubr lambda)
+		       (fsubr quote) (fsubr list) catte))
+		    'id-cont
+		    mc
+		    out
+		    q)))
+      `(,(map peano (list 4 8 1 0))))
 
 (test "conj*-expando-1"
       (run* (out) (conj*-expando
@@ -206,7 +234,28 @@
 			'(fresh (tm3 tm2 tm1)
 				(==mk (tm2 tm3) (42 (42 tm2)))) out))
       '((level: () result: ((42 42)))))
-
+(test "let-1"
+      (run* (out) (runo 'all
+			'(fresh (tm3 tm2 tm1)
+				(let ((tm4 tm3))
+				(==mk (tm2 tm4) (42 (42 tm2))))) out))
+      '((level: () result: ((42 42)))))
+(test "let-2"
+      (run* (out) (runo 'all
+			'(fresh (tm3 tm2 tm1)
+				(let ((ge
+				       (==mk (tm2 tm3) (42 (42 tm2)))
+				       ))
+				  ge)) out))
+      '((level: () result: ((42 42)))))
+(test "let-2"
+      (run* (out) (runo 'all
+			'(fresh (tm3 tm2 tm1)
+				(let ((ge
+				       (==mk (tm2 tm3) (42 (42 tm2)))
+				       ))
+				  ge)) out))
+      '((level: () result: ((42 42)))))
 ;; tests involving going up one level, to another relational level
 
 (test "muo-1"
@@ -233,7 +282,7 @@
 					 (call/fresh (tm)
 						     (==mk tm (e s/c r st k))))
 				    42 b a))) out))
-      '((level: (()) result: (((42 b a) (() (())) ((b a ==mk conj disj call/fresh fresh conj* conde rel-abs muo muos meaning-scm meaning-mk eval-scm eval-scmo new-scm new-mk apply-cont-jmp apply-cont-psh add-exit-lv-conto) ((((((((((((((((((((((()))))))))))))))))))))) ((((((((((((((((((((())))))))))))))))))))) 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)) (((((((((((((((((((((((()))))))))))))))))))))) ((((((((((((((((((((())))))))))))))))))))) 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1) ((_.) (_. ()) (rel-subr ==mk) (rel-subr conj) (rel-subr disj) (rel-subr call/fresh) (rel-subr fresh) (rel-subr conj*) (rel-subr conde) (rel-subr rel-abs) (rel-subr muo) (rel-subr muos) (rel-subr meaning-scm) (rel-subr meaning-mk) (rel-subr eval-scm) (rel-subr eval-scmo) (rel-subr new-scm) (rel-subr new-mk) (rel-subr apply-cont-jmp) (rel-subr apply-cont-psh) (rel-subr add-exit-lv-conto))) id-cont)))))
+      '((level: (()) result: (((42 b a) (() (())) ((b a ==mk conj disj call/fresh fresh conj* conde rel-abs muo muos meaning-scm meaning-mk eval-scm eval-scmo new-scm new-mk apply-cont-jmp apply-cont-psh add-exit-lv-conto) ((((((((((((((((((((((()))))))))))))))))))))) ((((((((((((((((((((())))))))))))))))))))) 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)) (((((((((((((((((((((((()))))))))))))))))))))) ((((((((((((((((((((())))))))))))))))))))) 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1) ((_.) (_. ()) (rel-subr ==mk) (goal-comb conj) (goal-comb disj) (goal-comb call/fresh) (goal-comb fresh) (goal-comb conj*) (goal-comb conde) (app-gen rel-abs) (app-gen muo) (app-gen muos) (rel-subr meaning-scm) (rel-subr meaning-mk) (rel-subr eval-scm) (rel-subr eval-scmo) (rel-subr new-scm) (rel-subr new-mk) (rel-subr apply-cont-jmp) (rel-subr apply-cont-psh) (rel-subr add-exit-lv-conto))) id-cont)))))
 
 (test "muo-3"
       (run 1 (out) (runo 'all
@@ -244,7 +293,7 @@
 						   1 2 3 4)))
 				  a b c d))
 			 out))
-      '((level: ((())) result: (env: ((b k st r s/c e ==mk conj disj call/fresh fresh conj* conde rel-abs muo muos meaning-scm meaning-mk eval-scm eval-scmo new-scm new-mk apply-cont-jmp apply-cont-psh add-exit-lv-conto) ((((((((((((((((((((((((((()))))))))))))))))))))))))) ((((((((((((((((((((())))))))))))))))))))) (((((((((((((((((((((()))))))))))))))))))))) ((((((((((((((((((((((())))))))))))))))))))))) (((((((((((((((((((((((()))))))))))))))))))))))) ((((((((((((((((((((((((())))))))))))))))))))))))) 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)) store: (((((((((((((((((((((((((((()))))))))))))))))))))))))) ((((((((((((((((((((())))))))))))))))))))) (((((((((((((((((((((()))))))))))))))))))))) ((((((((((((((((((((((())))))))))))))))))))))) (((((((((((((((((((((((()))))))))))))))))))))))) ((((((((((((((((((((((((())))))))))))))))))))))))) 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1) ((var (()) ()) id-cont ((((((((((((((((((((((())))))))))))))))))))) 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1) ((var () ()) (rel-subr ==mk) (rel-subr conj) (rel-subr disj) (rel-subr call/fresh) (rel-subr fresh) (rel-subr conj*) (rel-subr conde) (rel-subr rel-abs) (rel-subr muo) (rel-subr muos) (rel-subr meaning-scm) (rel-subr meaning-mk) (rel-subr eval-scm) (rel-subr eval-scmo) (rel-subr new-scm) (rel-subr new-mk) (rel-subr apply-cont-jmp) (rel-subr apply-cont-psh) (rel-subr add-exit-lv-conto))) ((a ==mk conj disj call/fresh fresh conj* conde rel-abs muo muos meaning-scm meaning-mk eval-scm eval-scmo new-scm new-mk apply-cont-jmp apply-cont-psh add-exit-lv-conto) (((((((((((((((((((((())))))))))))))))))))) 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)) (() ()) (a b c d) (rel-subr ==mk) (rel-subr conj) (rel-subr disj) (rel-subr call/fresh) (rel-subr fresh) (rel-subr conj*) (rel-subr conde) (rel-subr rel-abs) (rel-subr muo) (rel-subr muos) (rel-subr meaning-scm) (rel-subr meaning-mk) (rel-subr eval-scm) (rel-subr eval-scmo) (rel-subr new-scm) (rel-subr new-mk) (rel-subr apply-cont-jmp) (rel-subr apply-cont-psh) (rel-subr add-exit-lv-conto)))))))
+      '((level: ((())) result: (env: ((b k st r s/c e ==mk conj disj call/fresh fresh conj* conde rel-abs muo muos meaning-scm meaning-mk eval-scm eval-scmo new-scm new-mk apply-cont-jmp apply-cont-psh add-exit-lv-conto) ((((((((((((((((((((((((((()))))))))))))))))))))))))) ((((((((((((((((((((())))))))))))))))))))) (((((((((((((((((((((()))))))))))))))))))))) ((((((((((((((((((((((())))))))))))))))))))))) (((((((((((((((((((((((()))))))))))))))))))))))) ((((((((((((((((((((((((())))))))))))))))))))))))) 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)) store: (((((((((((((((((((((((((((()))))))))))))))))))))))))) ((((((((((((((((((((())))))))))))))))))))) (((((((((((((((((((((()))))))))))))))))))))) ((((((((((((((((((((((())))))))))))))))))))))) (((((((((((((((((((((((()))))))))))))))))))))))) ((((((((((((((((((((((((())))))))))))))))))))))))) 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1) ((var (()) ()) id-cont ((((((((((((((((((((((())))))))))))))))))))) 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1) ((var () ()) (rel-subr ==mk) (goal-comb conj) (goal-comb disj) (goal-comb call/fresh) (goal-comb fresh) (goal-comb conj*) (goal-comb conde) (app-gen rel-abs) (app-gen muo) (app-gen muos) (rel-subr meaning-scm) (rel-subr meaning-mk) (rel-subr eval-scm) (rel-subr eval-scmo) (rel-subr new-scm) (rel-subr new-mk) (rel-subr apply-cont-jmp) (rel-subr apply-cont-psh) (rel-subr add-exit-lv-conto))) ((a ==mk conj disj call/fresh fresh conj* conde rel-abs muo muos meaning-scm meaning-mk eval-scm eval-scmo new-scm new-mk apply-cont-jmp apply-cont-psh add-exit-lv-conto) (((((((((((((((((((((())))))))))))))))))))) 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)) (() ()) (a b c d) (rel-subr ==mk) (goal-comb conj) (goal-comb disj) (goal-comb call/fresh) (goal-comb fresh) (goal-comb conj*) (goal-comb conde) (app-gen rel-abs) (app-gen muo) (app-gen muos) (rel-subr meaning-scm) (rel-subr meaning-mk) (rel-subr eval-scm) (rel-subr eval-scmo) (rel-subr new-scm) (rel-subr new-mk) (rel-subr apply-cont-jmp) (rel-subr apply-cont-psh) (rel-subr add-exit-lv-conto)))))))
 
 
 (test "muo-4"
