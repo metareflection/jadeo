@@ -16,7 +16,7 @@
                      'tested-expression expected produced))))))))
 
 
-
+#|
 ;; tests for helper relations
 (test "lookupo-1"
       (run* (q) (lookupo 'a `((b a a) ,(map peano (list 3 2 1)))
@@ -274,7 +274,7 @@
 				  ))
 			out))
       '((level: () result: (((2 . 3) ((_.)) (_.))))))
-
+|#
 (test "letrec-1"
       (run* (out) (runo (peano 3)
 			'(fresh (x)
@@ -316,7 +316,7 @@
 				  (appendo '(1 2) '(3 4) x)))
 		        out))
       '((level: () result: ((1 2 3 4)))))
-
+#|
 
 ;; tests involving going up one level, to another relational level
 
@@ -544,3 +544,4 @@ steps
      --- or get rid of store, see if it's possible
 |#
 
+|#

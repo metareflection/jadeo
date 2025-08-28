@@ -21,6 +21,15 @@
         (apply printf (map (lambda (x) (walk* x (state-S st))) args))
         st)
       st))))
+(define trace-gexp #t)
+(define trace-gexpo
+  (lambda args
+    (lambda (st)
+  (if trace-gexp
+      (begin
+        (apply printf (map (lambda (x) (walk* x (state-S st))) args))
+        st)
+      st))))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Basic Helpers ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -239,24 +248,25 @@
 
 ;; evaluator for microkanren
 (define (eval-gexp-auxo gexp s/c env store cont mc out v-out)
-  (conde
-   [(fresh (rel ans)
-           (symbolo gexp)         
-           (lookupo gexp env store rel)
-	   (== v-out rel)
-           (== (answer v-out store) ans)
-	   ;;(debug-gexpo
-	    ;;"\neval-gexp lookup:\n rel: ~s\n s/c: ~s\n env: ~s\n store: ~s\n cont: ~s\n v-out: ~s\n\n"
-	    ;;rel s/c env store cont v-out)
-           (apply-rel-ko cont ans mc out))]
-   [(fresh (rel-e args rel-val-ignore)
-	   (== (cons rel-e args) gexp)
-	   (debug-gexpo
-	    "\neval-gexp:\n rel-e: ~s\n args: ~s\n s/c: ~s\n env: ~s\n store: ~s\n cont: ~s\n out: ~s\n v-out: ~s\n\n"
-	    rel-e args s/c env store cont out v-out)
-	   (eval-gexp-auxo rel-e s/c env store
-			  (list 'application-rel-k (list args s/c env v-out) cont)
-			  mc out rel-val-ignore))]))
+  (fresh (rel-val lv env-ids env-addrs store-addrs store-contents)
+	 (== (list env-ids env-addrs) env)
+	 (== (list store-addrs store-contents) store)
+	 (conde
+	  [(fresh (ans)
+		  (symbolo gexp)         
+		  (lookupo gexp env store rel-val)
+		  (== v-out rel-val)
+		  (== (answer v-out store) ans)
+		  (apply-rel-ko cont ans mc out))]
+	  [(fresh (rel-e args)
+		  (get-meta-level mc (peano-incr lv))
+		  (trace-gexpo
+		   "\neval-gexp:\n current-level: ~s\n gexp: ~s\n s/c: ~s\n env-ids: ~s\n store-contents: ~s\n cont: ~s\n out: ~s\n\n"
+		   lv gexp s/c env-ids store-contents cont out)
+		  (== (cons rel-e args) gexp)
+		  (eval-gexp-auxo rel-e s/c env store
+				  (list 'application-rel-k (list args s/c env v-out) cont)
+				  mc out rel-val))])))
 
 (define (apply-rel-ko cont val/store mc out)
   (conde
