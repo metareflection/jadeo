@@ -286,11 +286,18 @@ args: ~s\n k: ~s\n out: ~s\n v-out: ~s\n\n"
 		     rel-subr-name args k out v-out)
 		    (tm-lookupo args env store args^)
 		    (apply-rel-subro rel-subr-name args^ s/c env store k mc out v-out))]
-	    [(fresh (app-gen-name)
+	    [(fresh (app-gen-name paras body)
 		    (== rel (list 'app-gen app-gen-name))
-		    (apply-applicable-geno app-gen-name args s/c env store k mc out v-out))]
+		    (== (list paras body) args)
+		    ;;(== (list 'delay body) body^)
+		    (apply-applicable-geno app-gen-name paras body
+					   s/c env store k mc out v-out))]
 	    [(fresh (goal-comb-name)
 		    (== rel (list 'goal-comb goal-comb-name))
+		    (debug-gexpo
+		     "\napplication-rel-k goal-combo:\n comb-name: ~s\n 
+args: ~s\n k: ~s\n out: ~s\n v-out: ~s\n\n"
+		     goal-comb-name args k out v-out)
 		    (apply-goal-combo goal-comb-name args s/c env store k mc out v-out))]
 	    [(fresh (paras body env^ args^)
 		    (== rel (list 'rel-abs paras body env^))
@@ -332,6 +339,9 @@ args: ~s\n k: ~s\n out: ~s\n v-out: ~s\n\n"
    [(fresh (s/c env k v-out store gexp*-rst $*-rst)
            (== (list 'eval-list-k (list gexp*-rst env s/c $*-rst) k) cont)
            (== (answer v-out store) val/store)
+	   (debug-gexpo
+	    "\neval-list-k:\n gexp*-rst: ~s\n store: ~s\n k: ~s\n out: ~s\n\n"
+	    gexp*-rst store k out)	   
            (eval-list-gexpo gexp*-rst s/c env store
 			    (list 'cons-k (list v-out) k) mc out $*-rst))]
    [(fresh (v-out k $* store ans)
@@ -376,29 +386,21 @@ args: ~s\n k: ~s\n out: ~s\n v-out: ~s\n\n"
 	   (eval-gexp-auxo body s/c env^ store^ k mc out v-out)
 	   )]
    ))
-(define (apply-applicable-geno rel-name args s/c env store cont mc out v-out)
-  (conde
-   [(fresh (paras body ans)
-	   (== 'rel-abs rel-name)
-	   (== (list paras body) args)
-	   (== (list 'rel-abs paras body env) v-out)
-	   (== (answer v-out store) ans)
-           (apply-rel-ko cont ans mc out))]
-   
-   [(fresh (paras body ans)
-	   (== 'muo rel-name)
-	   (== (list paras body) args)
+(define (apply-applicable-geno rel-name paras body s/c env store cont mc out v-out)
+  (fresh (ans)
+	 (conde
+	  [(fresh (body^)
+		  (== 'rel-abs rel-name)
+		  (== (list 'delay body) body^)
+		  (== (list 'rel-abs paras body^ env) v-out))]
+	  [(== 'muo rel-name)
 	   (lengtho paras (peano 5))
-	   (== (list 'muo-reifier paras body) v-out)
-	   (== (answer v-out store) ans)
-           (apply-rel-ko cont ans mc out))]
-   [(fresh (paras body ans)
-	   (== 'muos rel-name)
-	   (== (list paras body) args)
+	   (== (list 'muo-reifier paras body) v-out)]
+	  [(== 'muos rel-name)
 	   (lengtho paras (peano 5))
-	   (== (list 'muos-reifier paras body) v-out)
-	   (== (answer v-out store) ans)
-           (apply-rel-ko cont ans mc out))]))
+	   (== (list 'muos-reifier paras body) v-out)])
+	 (== (answer v-out store) ans)
+	 (apply-rel-ko cont ans mc out)))
 
 (define (apply-rel-subro rel-name args s/c env store cont mc out v-out)
   (conde
@@ -487,9 +489,10 @@ args: ~s\n k: ~s\n out: ~s\n v-out: ~s\n\n"
 	   (get-meta-level mc (peano-incr lv))
 	   (debug-gexpo
 	    "\neval-scmo 0:\n e: ~s\n 
-env^: ~s\n store: ~s\n out: ~s\n v-out: ~s\n\n"
+env: ~s\n store: ~s\n out: ~s\n v-out: ~s\n\n"
 	    e env store out v-out)
 	   (mk-r/st-to-scm-r/sto env store env^ store^)
+	    
 	   (== (list 'unify-with-k (list out-para s/c) cont) cont^)
 	   (debug-gexpo
 	    "\neval-scmo 1:\n e: ~s\n 
@@ -605,6 +608,9 @@ env^: ~s\n store^: ~s\n out: ~s\n v-out: ~s\n\n"
 	   (== 'let comb-name)
 	   (== (list pairs body) args)
 	   (let-ids-bodies pairs ids bodies)
+	   (debug-gexpo
+	    "\napply goal-combo let:\n ids: ~s\n bodies: ~s\n body: ~s\n v-out: ~s\n\n"
+	    ids bodies body v-out)
 	   (eval-list-gexpo bodies s/c env store
 			    (list 'let-k (list ids body s/c env v-out) cont)
 			    mc out bodies-vals))]
@@ -620,6 +626,11 @@ env^: ~s\n store^: ~s\n out: ~s\n v-out: ~s\n\n"
 	   (eval-list-gexpo bodies s/c env^ store
 			   (list 'letrec-k (list addr* body s/c env^ v-out) cont)
 			   mc out bodies-vals))]
+   [(fresh (body)
+	   (== 'delay comb-name)
+	   (== (list body) args)
+	   (== (list 'delayed 'eval body s/c env store) v-out)
+	   (apply-rel-ko cont (answer v-out store) mc out))]
    ))
 
 (define (conde-expando conjs ge^)
@@ -661,23 +672,24 @@ env^: ~s\n store^: ~s\n out: ~s\n v-out: ~s\n\n"
            (appendo l1-rst l2 l-out-rst))]))
 
 (define (mk-r/st-to-scm-r/sto env store env^ store^)
-  (fresh (name* addr* content* name*^ addr*^ content*^
-		new-name* new-content* len)
-	 (== (list name* addr*) env)
-	 (== (list addr* content*) store)
+  (fresh (name* addr*1 addr*2 content* name*^ addr*1^ addr*2^ content*^
+		new-name* new-content* len1 len2)
+	 (== (list name* addr*1) env)
+	 (== (list addr*2 content*) store)
 	 (debug-gexpo
 	  "\nmk-r/st-to-scm-r/sto 0:\n name*: ~s\n addr*: ~s\n content*: ~s\n\n"
-	  name* addr* content*)
-	 (== (list name*^ addr*^) env^)
-	 (== (list addr*^ content*^) store^)
+	  name* addr*1 content*)
+	 (== (list name*^ addr*1^) env^)
+	 (== (list addr*2^ content*^) store^)
 	 
 	 (appendo new-name* mk-init-env-names name*)
 	 (appendo new-content* mk-init-store-contents content*)
 	 (appendo new-name* scm-init-env-names name*^)
 	 (appendo new-content* scm-init-store-contents content*^)
-	 (lengtho name*^ len)
-	 (lengtho content*^ len)
-	 (peano-iotao len addr*^)))
+	 (lengtho name*^ len1)
+	 (lengtho content*^ len2)
+	 (peano-iotao len1 addr*1^)
+	 (peano-iotao len2 addr*2^)))
 (define (apply-exit-level-conto v-out mc out)
   (conde
    [(fresh (upper-s/c upper-env upper-store upper-cont
@@ -1202,15 +1214,19 @@ env^: ~s\n store^: ~s\n out: ~s\n v-out: ~s\n\n"
        (== `(,a . ,d) $)
        (== $ $1)
        (=/= 'delayed a))]
+    [(fresh (ge s/c env store $2 out)
+	    (== `(delayed eval ,ge ,s/c ,env ,store) $)
+	    (eval-gexp-auxo ge s/c env store 'id-cont mc out $2)
+	    (pullo $2 mc $1))]
     [(fresh ($a $b $a1 $2)
        (== `(delayed mplus ,$a ,$b) $)
        (pullo $a mc $a1)
        (mpluso $b $a1 $2)
        (pullo $2 mc $1))]
-    [(fresh (saved-ge saved-env saved-store saved-$ saved-$1 $2 $-tmp)
+    [(fresh (saved-ge saved-env saved-store saved-$ saved-$1 $2 out)
        (== `(delayed bind ,saved-$ ,saved-ge ,saved-env ,saved-store) $)
        (pullo saved-$ mc saved-$1)
-       (bindo saved-$1 saved-ge saved-env saved-store 'id-cont mc $2 $-tmp)
+       (bindo saved-$1 saved-ge saved-env saved-store 'id-cont mc out $2)
        (pullo $2 mc $1))]))
 
 (define (take-allo $ mc s/c*)
@@ -1315,7 +1331,7 @@ env^: ~s\n store^: ~s\n out: ~s\n v-out: ~s\n\n"
 (define mk-init-env-names
   '(==mk conj disj call/fresh
 	 fresh conj* conde
-	 let letrec
+	 let letrec delay
 	 rel-abs muo muos
 	 meaning-scm
 	 meaning-mk
@@ -1336,6 +1352,7 @@ env^: ~s\n store^: ~s\n out: ~s\n v-out: ~s\n\n"
     (goal-comb conde)
     (goal-comb let)
     (goal-comb letrec)
+    (goal-comb delay)
     (app-gen rel-abs)
     (app-gen muo)
     (app-gen muos)

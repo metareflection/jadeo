@@ -16,6 +16,7 @@
                      'tested-expression expected produced))))))))
 
 
+
 ;; tests for helper relations
 (test "lookupo-1"
       (run* (q) (lookupo 'a `((b a a) ,(map peano (list 3 2 1)))
@@ -248,14 +249,75 @@
 				       ))
 				  ge)) out))
       '((level: () result: ((42 42)))))
-(test "let-2"
+(test "eval-scmo-==-1"
       (run* (out) (runo 'all
-			'(fresh (tm3 tm2 tm1)
-				(let ((ge
-				       (==mk (tm2 tm3) (42 (42 tm2)))
-				       ))
-				  ge)) out))
-      '((level: () result: ((42 42)))))
+			'(fresh (x)
+				(let ([== (rel-abs (a b)
+						   (fresh (out)
+							  (eval-scmo a out)
+							  (eval-scmo b out)))])
+		        	  (== 'x '(cons 2 3))
+				  ))
+			out))
+      '((level: () result: ((2 . 3)))))
+(test "eval-scmo-==-2"
+      (run* (out) (runo 'all
+			'(fresh (a x y z)
+				(let ([== (rel-abs (a b)
+						   (fresh (out)
+							  (eval-scmo a out)
+							  (eval-scmo b out)))])
+		        	  (conj
+				   (== '((lambda (x y) (list x y)) x z)
+				       '(cons (cons 2 3) y))
+				   (==mk a (x y z)))
+				  ))
+			out))
+      '((level: () result: (((2 . 3) ((_.)) (_.))))))
+
+(test "letrec-1"
+      (run* (out) (runo (peano 3)
+			'(fresh (x)
+				(letrec ([fives
+					  (rel-abs (x)
+						   (conde
+						    [(==mk x 5)]
+						    [(fives x)])
+						   )])
+				  (fives x)))
+		        out))
+      '((level: () result: (5 5 5))))
+
+(test "letrec-2"
+      (run* (out) (runo (peano 8)
+			'(fresh (x)
+				(letrec ([fives-sixes
+					  (rel-abs (x)
+						   (conde
+						    [(==mk x 5)]
+						    [(==mk x 6)]
+						    [(fives-sixes x)])
+						   )])
+				  (fives-sixes x)))
+		        out))
+      '((level: () result: (5 6 5 6 5 6 5 6))))
+
+(test "letrec-3"
+      (run* (out) (runo 'all
+			'(fresh (x)
+				(letrec ([appendo
+					  (rel-abs (l1 l2 l)
+						   (conde
+						    [(==mk '() l1) (==mk l2 l)]
+						    [(fresh (a d l3)
+							    (==mk (a . d) l1)
+							    (==mk (a . l3) l)
+							    (appendo d l2 l3))]))])
+				  (appendo '(1 2) '(3 4) x)))
+		        out))
+      '((level: () result: ((1 2 3 4)))))
+
+
 ;; tests involving going up one level, to another relational level
 
 (test "muo-1"
@@ -282,7 +344,7 @@
 					 (call/fresh (tm)
 						     (==mk tm (e s/c r st k))))
 				    42 b a))) out))
-      '((level: (()) result: (((42 b a) (() (())) ((b a ==mk conj disj call/fresh fresh conj* conde rel-abs muo muos meaning-scm meaning-mk eval-scm eval-scmo new-scm new-mk apply-cont-jmp apply-cont-psh add-exit-lv-conto) ((((((((((((((((((((((()))))))))))))))))))))) ((((((((((((((((((((())))))))))))))))))))) 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)) (((((((((((((((((((((((()))))))))))))))))))))) ((((((((((((((((((((())))))))))))))))))))) 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1) ((_.) (_. ()) (rel-subr ==mk) (goal-comb conj) (goal-comb disj) (goal-comb call/fresh) (goal-comb fresh) (goal-comb conj*) (goal-comb conde) (app-gen rel-abs) (app-gen muo) (app-gen muos) (rel-subr meaning-scm) (rel-subr meaning-mk) (rel-subr eval-scm) (rel-subr eval-scmo) (rel-subr new-scm) (rel-subr new-mk) (rel-subr apply-cont-jmp) (rel-subr apply-cont-psh) (rel-subr add-exit-lv-conto))) id-cont)))))
+      '((level: (()) result: (((42 b a) (() (())) ((b a ==mk conj disj call/fresh fresh conj* conde let letrec delay rel-abs muo muos meaning-scm meaning-mk eval-scm eval-scmo new-scm new-mk apply-cont-jmp apply-cont-psh add-exit-lv-conto) (((((((((((((((((((((((((())))))))))))))))))))))))) (((((((((((((((((((((((()))))))))))))))))))))))) 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)) ((((((((((((((((((((((((((())))))))))))))))))))))))) (((((((((((((((((((((((()))))))))))))))))))))))) 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1) ((_.) (_. ()) (rel-subr ==mk) (goal-comb conj) (goal-comb disj) (goal-comb call/fresh) (goal-comb fresh) (goal-comb conj*) (goal-comb conde) (goal-comb let) (goal-comb letrec) (goal-comb delay) (app-gen rel-abs) (app-gen muo) (app-gen muos) (rel-subr meaning-scm) (rel-subr meaning-mk) (rel-subr eval-scm) (rel-subr eval-scmo) (rel-subr new-scm) (rel-subr new-mk) (rel-subr apply-cont-jmp) (rel-subr apply-cont-psh) (rel-subr add-exit-lv-conto))) id-cont)))))
 
 (test "muo-3"
       (run 1 (out) (runo 'all
@@ -293,7 +355,7 @@
 						   1 2 3 4)))
 				  a b c d))
 			 out))
-      '((level: ((())) result: (env: ((b k st r s/c e ==mk conj disj call/fresh fresh conj* conde rel-abs muo muos meaning-scm meaning-mk eval-scm eval-scmo new-scm new-mk apply-cont-jmp apply-cont-psh add-exit-lv-conto) ((((((((((((((((((((((((((()))))))))))))))))))))))))) ((((((((((((((((((((())))))))))))))))))))) (((((((((((((((((((((()))))))))))))))))))))) ((((((((((((((((((((((())))))))))))))))))))))) (((((((((((((((((((((((()))))))))))))))))))))))) ((((((((((((((((((((((((())))))))))))))))))))))))) 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)) store: (((((((((((((((((((((((((((()))))))))))))))))))))))))) ((((((((((((((((((((())))))))))))))))))))) (((((((((((((((((((((()))))))))))))))))))))) ((((((((((((((((((((((())))))))))))))))))))))) (((((((((((((((((((((((()))))))))))))))))))))))) ((((((((((((((((((((((((())))))))))))))))))))))))) 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1) ((var (()) ()) id-cont ((((((((((((((((((((((())))))))))))))))))))) 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1) ((var () ()) (rel-subr ==mk) (goal-comb conj) (goal-comb disj) (goal-comb call/fresh) (goal-comb fresh) (goal-comb conj*) (goal-comb conde) (app-gen rel-abs) (app-gen muo) (app-gen muos) (rel-subr meaning-scm) (rel-subr meaning-mk) (rel-subr eval-scm) (rel-subr eval-scmo) (rel-subr new-scm) (rel-subr new-mk) (rel-subr apply-cont-jmp) (rel-subr apply-cont-psh) (rel-subr add-exit-lv-conto))) ((a ==mk conj disj call/fresh fresh conj* conde rel-abs muo muos meaning-scm meaning-mk eval-scm eval-scmo new-scm new-mk apply-cont-jmp apply-cont-psh add-exit-lv-conto) (((((((((((((((((((((())))))))))))))))))))) 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)) (() ()) (a b c d) (rel-subr ==mk) (goal-comb conj) (goal-comb disj) (goal-comb call/fresh) (goal-comb fresh) (goal-comb conj*) (goal-comb conde) (app-gen rel-abs) (app-gen muo) (app-gen muos) (rel-subr meaning-scm) (rel-subr meaning-mk) (rel-subr eval-scm) (rel-subr eval-scmo) (rel-subr new-scm) (rel-subr new-mk) (rel-subr apply-cont-jmp) (rel-subr apply-cont-psh) (rel-subr add-exit-lv-conto)))))))
+      ' ((level: ((())) result: (env: ((b k st r s/c e ==mk conj disj call/fresh fresh conj* conde let letrec delay rel-abs muo muos meaning-scm meaning-mk eval-scm eval-scmo new-scm new-mk apply-cont-jmp apply-cont-psh add-exit-lv-conto) (((((((((((((((((((((((((((((())))))))))))))))))))))))))))) (((((((((((((((((((((((()))))))))))))))))))))))) ((((((((((((((((((((((((())))))))))))))))))))))))) (((((((((((((((((((((((((()))))))))))))))))))))))))) ((((((((((((((((((((((((((())))))))))))))))))))))))))) (((((((((((((((((((((((((((()))))))))))))))))))))))))))) 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)) store: ((((((((((((((((((((((((((((((())))))))))))))))))))))))))))) (((((((((((((((((((((((()))))))))))))))))))))))) ((((((((((((((((((((((((())))))))))))))))))))))))) (((((((((((((((((((((((((()))))))))))))))))))))))))) ((((((((((((((((((((((((((())))))))))))))))))))))))))) (((((((((((((((((((((((((((()))))))))))))))))))))))))))) 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1) ((var (()) ()) id-cont (((((((((((((((((((((((((()))))))))))))))))))))))) 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1) ((var () ()) (rel-subr ==mk) (goal-comb conj) (goal-comb disj) (goal-comb call/fresh) (goal-comb fresh) (goal-comb conj*) (goal-comb conde) (goal-comb let) (goal-comb letrec) (goal-comb delay) (app-gen rel-abs) (app-gen muo) (app-gen muos) (rel-subr meaning-scm) (rel-subr meaning-mk) (rel-subr eval-scm) (rel-subr eval-scmo) (rel-subr new-scm) (rel-subr new-mk) (rel-subr apply-cont-jmp) (rel-subr apply-cont-psh) (rel-subr add-exit-lv-conto))) ((a ==mk conj disj call/fresh fresh conj* conde let letrec delay rel-abs muo muos meaning-scm meaning-mk eval-scm eval-scmo new-scm new-mk apply-cont-jmp apply-cont-psh add-exit-lv-conto) ((((((((((((((((((((((((()))))))))))))))))))))))) 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)) (() ()) (a b c d) (rel-subr ==mk) (goal-comb conj) (goal-comb disj) (goal-comb call/fresh) (goal-comb fresh) (goal-comb conj*) (goal-comb conde) (goal-comb let) (goal-comb letrec) (goal-comb delay) (app-gen rel-abs) (app-gen muo) (app-gen muos) (rel-subr meaning-scm) (rel-subr meaning-mk) (rel-subr eval-scm) (rel-subr eval-scmo) (rel-subr new-scm) (rel-subr new-mk) (rel-subr apply-cont-jmp) (rel-subr apply-cont-psh) (rel-subr add-exit-lv-conto)))))))
 
 
 (test "muo-4"
