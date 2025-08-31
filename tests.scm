@@ -1,5 +1,3 @@
-(load "jadeo.scm")
-
 (define test-failed #f)
 
 (define-syntax test

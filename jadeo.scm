@@ -5,9 +5,9 @@
 
 (define debug-gexp #f)
 
-(define trace-gexp #t)
-(define trace-on (set! trace-gexp #t))
-(define trace-off (set! trace-gexp #f))
+(define trace-gexp #f)
+(define (trace-on) (set! trace-gexp #t))
+(define (trace-off) (set! trace-gexp #f))
 
 (define debugo
   (lambda args
@@ -22,7 +22,7 @@
             (apply printf (map (lambda (x) (walk* x (state-S st))) (cdr args)))
             st)
 	  st))))
-
+(define (run-tests) (load "tests.scm"))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Basic Helpers ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
