@@ -679,7 +679,7 @@ env^: ~s\n store^: ~s\n out: ~s\n v-out: ~s\n\n"
 	 (== (list name* addr*1) env)
 	 (== (list addr*2 content*) store)
 	 (debugo 'gexp
-	  "\nmk-r/st-to-scm-r/sto 0:\n name*: ~s\n addr*: ~s\n content*: ~s\n\n"
+	  "\nmk-r/st-to-scm-r/sto 0:\n name*: ~s\n addr*1: ~s\n content*: ~s\n\n"
 	  name* addr*1 content*)
 	 (== (list name*^ addr*1^) env^)
 	 (== (list addr*2^ content*^) store^)
@@ -770,7 +770,7 @@ env^: ~s\n store^: ~s\n out: ~s\n v-out: ~s\n\n"
 (define (apply-muo-reifiero para* body args s/c env store cont mc out $)
   (fresh (upper-s/c upper-env upper-store upper-cont
 		    upper-level upper-meta-cont forced-mc
-		    addr* env-res store-res)
+		    env-res store-res)
 	 (lengtho para* (peano 5))
 	 (== (cons (list 'kanren upper-level upper-s/c upper-env upper-store upper-cont)
 		   upper-meta-cont) forced-mc)
@@ -782,7 +782,7 @@ env^: ~s\n store^: ~s\n out: ~s\n v-out: ~s\n\n"
 	 ))
 (define (apply-muos-reifiero para* body args s/c env store cont mc out v-out)
   (fresh (upper-level upper-env upper-store upper-cont upper-meta-cont
-		      forced-mc addr* env-res store-res)
+		      forced-mc env-res store-res)
 	 (lengtho para* (peano 5))
 	 (== (cons (list 'scheme upper-level upper-env upper-store upper-cont) upper-meta-cont)
 	     forced-mc)
