@@ -37,12 +37,15 @@ Other than the key features, we also have a few Blond like constructs for dealin
 
 
 ## Example Use Cases
-	In the following example, we use ``run`` to run miniKanren inside Scheme, then run Jadeo via the ``runo`` relation.
-	We first introduce fresh variables `a`, `b`, `c`, and `d` in level 0, then use `muo` to go up to level 1.
-	The reifier `muo` reifies the substitution-counter pair, environment, store, and continuation at level 0 when it is invoked.
-	This means the expression `(conj (==mk 42 d) (==mk c (d (d 3))))` is bound to the symbol `e` at level 1, and the remaining continuation that requires a conjunction with relations ` (==mk (d b) c)` and `(==mk a (c b)` into symbol `k`, and environment and store containing the variables `a`,  `b`, `c`, and `d` bound to symbols `r` and `st`.
-	In level 1, we first use `==mk` to unify the new fresh variable generated at level 1 with `e`, which stores the expression `(conj (==mk 42 d) (==mk c (d (d 3))))`. Then we use the reflector `meaning-mk` to reopen a miniKanren level, going back to level 0. In level 0, we first evaluate `(conj (==mk 42 d) (==mk c (d (d 3))))`, then bind the resulting stream to expressions `(==mk (d b) c)` and `(==mk a (c b))`.
-	After evaluation of expression is done, we now have 42 unified to the variable denoted by `d`, `c` to `(d (d 3))` thus `(42 (42 3))`, `b` to `(42 3)`, and `a` to  `((42 (42 3)) (42 3))`. `runo` would take all possible output for `a`, the first variable introduced by `fresh`, and since there is only one answer, `((42 (42 3)) (42 3))` is the final result we get. Since this result comes from level 0, we use the peano representation of level 0, the empty list, to denote the level.
+
+In the following example, we use ``run`` to run miniKanren inside Scheme, then run Jadeo via the ``runo`` relation.
+We first introduce fresh variables `a`, `b`, `c`, and `d` in level 0, then use `muo` to go up to level 1. The reifier `muo` reifies the substitution-counter pair, environment, store, and continuation at level 0 when it is invoked.
+
+This means the expression `(conj (==mk 42 d) (==mk c (d (d 3))))` is bound to the symbol `e` at level 1, and the remaining continuation that requires a conjunction with relations ` (==mk (d b) c)` and `(==mk a (c b)` into symbol `k`, and environment and store containing the variables `a`,  `b`, `c`, and `d` bound to symbols `r` and `st`.
+
+In level 1, we first use `==mk` to unify the new fresh variable generated at level 1 with `e`, which stores the expression `(conj (==mk 42 d) (==mk c (d (d 3))))`. Then we use the reflector `meaning-mk` to reopen a miniKanren level, going back to level 0. In level 0, we first evaluate `(conj (==mk 42 d) (==mk c (d (d 3))))`, then bind the resulting stream to expressions `(==mk (d b) c)` and `(==mk a (c b))`.
+
+After evaluation of expression is done, we now have 42 unified to the variable denoted by `d`, `c` to `(d (d 3))` thus `(42 (42 3))`, `b` to `(42 3)`, and `a` to  `((42 (42 3)) (42 3))`. `runo` would take all possible output for `a`, the first variable introduced by `fresh`, and since there is only one answer, `((42 (42 3)) (42 3))` is the final result we get. Since this result comes from level 0, we use the peano representation of level 0, the empty list, to denote the level.
 	
 ```
 > (run 1 (out) (runo 'all
