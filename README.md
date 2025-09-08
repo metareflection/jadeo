@@ -11,28 +11,28 @@ A Jadeo expression mixes up miniKanren and Scheme parts using reifiers and refle
 Other than reifiers, we also have reflectors like ``meaning-mk`` and ``meaning-scm``, which takes in expressions, substitution-counter pair (for ``meaning-mk``), reified enironment, reified store, reified continuation, and generates a new level based on these input. There is also a relational version of ``meaning-scm``, ``meaning-scmo``, that additionally takes an argument for unifying with the result returned by the new Scheme level. The reflector ``meaning`` is a generalization of the common ``eval`` special form, and we achieve the behaviour of ``eval`` through generating new levels, which gives us two extra reflectors ``eval-scm`` and ``eval-mk``. Finally we also have ``new-scm`` and ``new-mk``, which are like eval, but evalutes input expression not under the current environment, store, and continuation, but under completely new initial environment, new initial store, and identity continuation. They are similar to the``open-level`` fsubr found in Blond.
 
 The following table summarizes the key reifiers and reflectors of Jadeo:
-| name         | description                                                                                        |
-|--------------|----------------------------------------------------------------------------------------------------|
-| muo          | reifier from miniKanren to miniKanren                                                              |
-| muso         | reifier from Scheme to miniKanren                                                                  |
-| muos         | reifier from miniKanren to Scheme                                                                  |
-| meaning-mk   | reflector for making new miniKanren level                                                          |
-| meaning-scm  | reflector for making new scheme level                                                              |
-| meaning-scmo | relational reflector for making new scheme level                                                   |
-| eval-mk      | reflector using current environment and continuation as env and cont of a new relational level     |
-| eval-scm     | like eval-mk, but takes Scheme expressions, and change environment to contain Scheme default fsubr |
-| eval-scmo    | relational version of eval-scmo                                                                    |
-| new-scm      | like eval-scm, but uses initial environment, store, and continuation to evaluate expression        |
-| new-mk       | like new-scm, but evaluates a miniKanren expression                                                |
+| name                          | description                                                                                        |
+|-------------------------------|----------------------------------------------------------------------------------------------------|
+| `(muo (e s/c r st k) gexp)`   | reifier from miniKanren to miniKanren                                                              |
+| `(muos (e s/c r st k) exp)`   | reifier from miniKanren to Scheme                                                                  |
+| `(muso (e r st k) gexp)`      | reifier from Scheme to miniKanren                                                                  |
+| `(meaning-mk e s/c r st k)`   | reflector for making new miniKanren level                                                          |
+| `(meaning-scm e r st k)`      | reflector for making new scheme level                                                              |
+| `(meaning-scmo e r st k out)` | relational reflector for making new scheme level                                                   |
+| `(eval-mk ge)`                | reflector using current environment and continuation as env and cont of a new relational level     |
+| `(eval-scm e)`                | like eval-mk, but takes Scheme expressions, and change environment to contain Scheme default fsubr |
+| `(eval-scmo e out)`           | relational version of eval-scmo                                                                    |
+| `(new-scm e)`                 | like eval-scm, but uses initial environment, store, and continuation to evaluate expression        |
+| `(new-mk ge)`                 | like new-scm, but evaluates a miniKanren expression                                                |
 
 
 Other than the key features, we also have a few Blond like constructs for dealing with reified continuations and reified environments. The special forms ``apply-cont-jmp`` and ``apply-cont-psh`` take in a reified continuation and an argument, and continues with the reified continuation by supplying the argument provided. The former discards the curent continuation while the latter pushes the current continuation of current level onto the tower.
-| name              | description                                                                                  |
-|-------------------|----------------------------------------------------------------------------------------------|
-| apply-cont-jmp    | same as jumpy way of applying reified continuation in Blond                                  |
-| apply-cont-psh    | same as pushy way of applying reified continuation in Blond                                  |
-| add-exit-lv-conto | relation that relates a reified continuation with a modified one that exit level at the end  |
-| rei-lookup        | function taking a symbol and reified environment and store, returns value of symbol in store |
+| name                       | description                                                                                  |
+|----------------------------|----------------------------------------------------------------------------------------------|
+| `(apply-cont-jmp k e)`     | same as jumpy way of applying reified continuation in Blond                                  |
+| `(apply-cont-psh k e)`     | same as pushy way of applying reified continuation in Blond                                  |
+| `(add-exit-lv-conto k k^)` | relation that relates a reified continuation with a modified one that exit level at the end  |
+| `(rei-lookup e r st)`      | function taking a symbol and reified environment and store, returns value of symbol in store |
 
 
 
