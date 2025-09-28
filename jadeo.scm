@@ -1,6 +1,6 @@
-(load "lookupo-lib.scm")
 (load "mk-vicare.scm")
 (load "faster-mk.scm")
+(load "lookupo-lib.scm")
 (define debug-scm #f)
 
 (define debug-gexp #f)
