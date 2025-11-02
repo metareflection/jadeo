@@ -377,6 +377,30 @@
 				  a b c d))
 			 out))
       '((level: ((())) result: (99 (42 24 (1 2 3 4))))))
+(test "muo-4-e-play1" ;; getting the symbol e directly inside muos
+      (run 1 (out) (runo 'all
+			 '(fresh (a)
+				 ((muo (e s/c r st k)
+				       (fresh (b)
+					      ((muos (e1 s/c1 r1 st1 k1)
+						     e1)
+					       e)))
+				  a 1)
+				 (==mk a 2))
+			 out))
+      '((level: ((())) result: (e))))
+(test "muo-4-e-play2" ;; getting the value e directly inside muos
+      (run 1 (out) (runo 'all
+			 '(fresh (a)
+				 ((muo (e s/c r st k)
+				       (fresh (b)
+					      ((muos (e1 s/c1 r1 st1 k1)
+						     (rei-lookup (car e1) r1 st1))
+					       e)))
+				  a 1)
+				 (==mk a 2))
+			 out))
+      '((level: ((())) result: (a 1))))
 
 (test "muo-5"
       (run 1 (out) (runo 'all
