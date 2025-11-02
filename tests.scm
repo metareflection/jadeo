@@ -35,6 +35,7 @@
 		    out
 		    q)))
       '((5 catte 7)))
+
 (test "eval-scm-auxo-0"
       (run* (q)
 	    (fresh (mc out)
@@ -62,6 +63,7 @@
 		    out
 		    q)))
       '(catte))
+
 (test "eval-scm-auxo-2"
       (run* (q)
 	    (fresh (mc out)
@@ -89,6 +91,7 @@
 		    out
 		    q)))
       '(((mouse) catte 7)))
+
 (test "eval-scm-auxo-4"
       (run* (q)
 	    (fresh (mc out)
@@ -106,6 +109,7 @@
 		    out
 		    q)))
       '((99 (42 24 (99 88 777)))))
+
 (test "eval-scm-auxo-5"
       (run* (q)
 	    (fresh (mc out)
@@ -163,6 +167,7 @@
 (test "runo-1"
   (run* (out) (runo 'all '(call/fresh (b) (==mk 42 b)) out))
   '((level: () result: (42))))
+
 (test "runo-2"
       (run* (out) (runo 'all
 			'(call/fresh
@@ -233,12 +238,14 @@
 			'(fresh (tm3 tm2 tm1)
 				(==mk (tm2 tm3) (42 (42 tm2)))) out))
       '((level: () result: ((42 42)))))
+
 (test "let-1"
       (run* (out) (runo 'all
 			'(fresh (tm3 tm2 tm1)
 				(let ((tm4 tm3))
 				(==mk (tm2 tm4) (42 (42 tm2))))) out))
       '((level: () result: ((42 42)))))
+
 (test "let-2"
       (run* (out) (runo 'all
 			'(fresh (tm3 tm2 tm1)
@@ -247,6 +254,7 @@
 				       ))
 				  ge)) out))
       '((level: () result: ((42 42)))))
+
 (test "eval-scmo-==-1"
       (run* (out) (runo 'all
 			'(fresh (x)
@@ -258,6 +266,7 @@
 				  ))
 			out))
       '((level: () result: ((2 . 3)))))
+
 (test "eval-scmo-==-2"
       (run* (out) (runo 'all
 			'(fresh (a x y z)
@@ -325,6 +334,7 @@
 				       (fresh (tm) (==mk tm e)))
 				  42 b a)) out))
       '((level: (()) result: ((42 b a)))))
+
 (test "muo-1a"
       (run 1 (out) (runo 'all
 			 '(fresh (a b)
@@ -332,7 +342,6 @@
 				       (fresh (tm) (==mk tm s/c)))
 				  42 b a)) out))
       '((level: (()) result: ((() (()))))))
-;;
 
 (test "muo-2"
       (run 1 (out) (runo 'all
@@ -368,6 +377,7 @@
 				  a b c d))
 			 out))
       '((level: ((())) result: (99 (42 24 (1 2 3 4))))))
+
 (test "muo-5"
       (run 1 (out) (runo 'all
 			 '(fresh (a)
