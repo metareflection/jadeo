@@ -552,6 +552,12 @@ env^: ~s\n store^: ~s\n out: ~s\n v-out: ~s\n\n"
 	   (get-meta-level mc (peano-incr lv))
 	   (== (cons (list 'kanren lv s/c env store cont) mc) mc^)
 	   (apply-rel-ko k (answer e store) mc^ out)
+	   )]
+   [(fresh ()
+	   (== 'rei-lookupo rel-name)
+	   (== (list e r st tm) args)
+	   (lookupo e r st tm)
+	   (apply-rel-ko (list 'lookup-k k) something mc out)
 	   )]))
 (define (apply-goal-combo comb-name args s/c env store cont mc out v-out)
   (conde
