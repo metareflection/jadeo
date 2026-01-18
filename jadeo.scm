@@ -205,18 +205,18 @@
        (== `(,a . ,r1) $)
        (mpluso d $2 r1))]))
 
-(define (bindo $ ge env store cont mc out $-out)
+(define (bindo $ ge env store cont cenv cstore mc out $-out)
   (conde
    [(== '() $)
     (== '() $-out)
     (debugo 'gexp
      "\nbindo '():\n ge: ~s\n env: ~s\n store: ~s\n cont: ~s\n out: ~s\n $-out: ~s\n\n"
      ge env store cont out $-out)
-    (apply-rel-ko cont (answer $-out store) mc out)]
+    (apply-rel-ko cont (answer $-out store cstore) mc out)]
    [(fresh (d)
 	   (== `(delayed . ,d) $)
-	   (== `(delayed bind ,$ ,ge ,env ,store) $-out)
-	   (apply-rel-ko cont (answer $-out store) mc out))]
+	   (== `(delayed bind ,$ ,ge ,env ,store ,cenv ,cstore) $-out)
+	   (apply-rel-ko cont (answer $-out store cstore) mc out))]
    [(fresh (s/c $-rst ge-out)
 	   (== (cons s/c $-rst) $)
 	   (=/= 'delayed s/c)
@@ -224,8 +224,8 @@
 	    "\nbindo:\n ge: ~s\n s/c: ~s\n env: ~s\n store: ~s\n cont: ~s\n out: ~s\n $-out: ~s\n\n"
 	    ge s/c env store cont out $-out)
 	   (eval-gexp-auxo ge s/c env store
-			   (list 'bind-rec-k (list $-rst ge env $-out) cont)
-			   mc out ge-out)
+			   (list 'bind-rec-k (list $-rst ge env cenv $-out) cont)
+			   cenv cstore mc out ge-out)
 	   )]))
 
 (define (literalo exp)
@@ -393,7 +393,7 @@ args: ~s\n k: ~s\n out: ~s\n v-out: ~s\n\n"
    [(fresh (ids clet-args-vals body s/c env store k cenv cstore cenv^ cstore^ v-out)
 	   (== (list 'common-let-k (list ids body s/c env cenv v-out) k) cont)
 	   (== (answer clet-args-vals store cstore) val/store)
-	   (exts-env-storeo cenv cstore ids let-args-vals cenv^ cstore^)
+	   (exts-env-storeo cenv cstore ids clet-args-vals cenv^ cstore^)
 	   (eval-gexp-auxo body s/c env store k cenv^ cstore^ mc out v-out)
 	   )]
    [(fresh (addrs let-args-vals body s/c store k cenv cstore env^ store^ v-out)
@@ -949,7 +949,7 @@ env^: ~s\n store^: ~s\n out: ~s\n v-out: ~s\n\n"
      [(fresh (v-out k v* store ans cstore)
              (== (list 'cons-k (list v-out) k) cont)
              (== (answer v* store cstore) v/s)
-             (== (answer (cons v-out v*) store) ans)
+             (== (answer (cons v-out v*) store cstore) ans)
 	     (debugo 'scm
 	      "\ncons-k:\n v-out: ~s\n v*: ~s\n k: ~s\n\n"
 	      v-out v* k)
@@ -986,10 +986,10 @@ env^: ~s\n store^: ~s\n out: ~s\n v-out: ~s\n\n"
 	     (meaning-mk-o e-v init-s/c mk-init-env mk-init-store
 			   'id-cont (list 'scheme level env store k)
 			   cenv cstore mc out v-out))]
-     [(fresh (k e r st store v-out cstore)
-	     (== (list 'rei-lookup-k (list v-out) k) cont)
+     [(fresh (k e r st store v-out cenv cstore)
+	     (== (list 'rei-lookup-k (list cenv v-out) k) cont)
 	     (== (answer (list e r st) store cstore) v/s)
-	     (lookupo e r st v-out)
+	     (lookupo e r st cenv cstore v-out)
 	     (debugo 'scm
 	      "\nrei-lookup-k:\n e: ~s\n r: ~s\n st: ~s\n k: ~s\n out: ~s\n v-out: ~s\n\n"
 	      e r st k out v-out)
@@ -1136,7 +1136,7 @@ env^: ~s\n store^: ~s\n out: ~s\n v-out: ~s\n\n"
 	   (== 'rei-lookup fsubr-name)
 	   (== (list e r st) args)
 	   (eval-list-scmo args env store
-			   (list 'rei-lookup-k (list v-out) cont)
+			   (list 'rei-lookup-k (list cenv v-out) cont)
 			   cenv cstore mc out args-vals))]
    [(fresh (pairs body ids bodies bodies-vals)
 	   (== 'let fsubr-name)
@@ -1213,19 +1213,23 @@ env^: ~s\n store^: ~s\n out: ~s\n v-out: ~s\n\n"
        (== `(,a . ,d) $)
        (== $ $1)
        (=/= 'delayed a))]
-    [(fresh (ge s/c env store $2 out)
-	    (== `(delayed eval ,ge ,s/c ,env ,store) $)
-	    (eval-gexp-auxo ge s/c env store 'id-cont mc out $2)
+    [(fresh (ge s/c env store cenv cstore $2 out)
+	    (== `(delayed eval ,ge ,s/c ,env ,store ,cenv ,cstore) $)
+	    (eval-gexp-auxo ge s/c env store 'id-cont cenv cstore mc out $2)
 	    (pullo $2 mc $1))]
     [(fresh ($a $b $a1 $2)
        (== `(delayed mplus ,$a ,$b) $)
        (pullo $a mc $a1)
        (mpluso $b $a1 $2)
        (pullo $2 mc $1))]
-    [(fresh (saved-ge saved-env saved-store saved-$ saved-$1 $2 out)
-       (== `(delayed bind ,saved-$ ,saved-ge ,saved-env ,saved-store) $)
+    [(fresh (saved-ge saved-env saved-store
+		      saved-cenv saved-cstore
+		      saved-$ saved-$1 $2 out)
+	    (== `(delayed bind ,saved-$ ,saved-ge ,saved-env ,saved-store
+			  ,saved-cenv ,saved-cstore) $)
        (pullo saved-$ mc saved-$1)
-       (bindo saved-$1 saved-ge saved-env saved-store 'id-cont mc out $2)
+       (bindo saved-$1 saved-ge saved-env saved-store 'id-cont
+	      saved-cenv saved-cstore mc out $2)
        (pullo $2 mc $1))]))
 
 (define (take-allo $ mc s/c*)
@@ -1330,7 +1334,8 @@ env^: ~s\n store^: ~s\n out: ~s\n v-out: ~s\n\n"
 (define mk-init-env-names
   '(==mk conj disj call/fresh
 	 fresh conj* conde
-	 let letrec delay
+	 let letrec
+	 common-let delay
 	 rel-abs muo muos
 	 meaning-scm
 	 meaning-mk
@@ -1351,6 +1356,7 @@ env^: ~s\n store^: ~s\n out: ~s\n v-out: ~s\n\n"
     (goal-comb conde)
     (goal-comb let)
     (goal-comb letrec)
+    (goal-comb common-let)
     (goal-comb delay)
     (app-gen rel-abs)
     (app-gen muo)
@@ -1453,7 +1459,9 @@ env^: ~s\n store^: ~s\n out: ~s\n v-out: ~s\n\n"
 	  "\nruno other start vars:\n gexp: ~s\n\n"
 	  gexp)
 	 (eval-gexp-auxo gexp init-s/c
-			 init-env init-store 'id-cont mc lv/v-out v-out)
+			 init-env init-store 'id-cont
+			 empty-env empty-store
+			 mc lv/v-out v-out)
 	 (conde
 	  [(== (cons lv (cons 'scm-val v-out)) lv/v-out)
 	   (== (list 'level: lv 'result: v-out) out)]

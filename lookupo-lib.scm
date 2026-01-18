@@ -198,15 +198,19 @@
 
 
 (define lookupo
-  (lambda (x env store t)
+  (lambda (x env store cenv cstore t)
     (fresh (addr)
 	   (symbolo x)
 	   ;;(peano-no addr)
 	   (debug-lookupo
 	    "\nlookupo:\n x: ~s\n env: ~s\n store: ~s\n t: ~s\n\n"
 	    x env store t)
-	   (lookup-env-auxo x env store addr)
-	   (lookup-store-auxo addr store t))))
+	   (conde
+	    [(lookup-env-auxo x env store addr)
+	     (lookup-store-auxo addr store t)]
+	    [(lookup-env-auxo x cenv cstore addr)
+	     (lookup-store-auxo addr cstore t)])
+	   )))
 
 (define lookup-env-auxo
 ;;; it may be possible to avoid having to bound the length of env to

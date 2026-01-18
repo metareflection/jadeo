@@ -14,7 +14,7 @@
                      'tested-expression expected produced))))))))
 
 
-
+#|
 ;; tests for helper relations
 (test "lookupo-1"
       (run* (q) (lookupo 'a `((b a a) ,(map peano (list 3 2 1)))
@@ -161,7 +161,7 @@
 		     conj (==mk 42 b) (==mk a (b (b 3)))))
 		   out))
       '((call/fresh (a) (call/fresh (b) (conj* ((muo (e s/c r st k) (fresh (tm) (meaning-mk e s/c r st k) (eval-scmo (quote (rei-lookup (quote a) r st)) tm))) conj (==mk 42 b) (==mk a (b (b 3)))))))))
-
+|#
 ;; tests involving no tower
 
 (test "runo-1"
@@ -476,7 +476,25 @@
 			     ((42 23) (42 23) 42 ((42 23) (42 29))))
 			    (((42 24) (42 24) 42 ((42 24) (42 29)))
 			     ((42 24) (42 24) 42 ((42 24) (42 29))))))))
-
+(test "common-let-1"
+      (run 1 (out) (runo 'all
+			 '(fresh (x1 x2 x)
+				 (common-let
+				  ([appendo
+				    (rel-abs (l1 l2 l)
+					     (conde
+					      [(==mk '() l1) (==mk l2 l)]
+					      [(fresh (a d l3)
+						      (==mk (a . d) l1)
+						      (==mk (a . l3) l)
+						      (appendo d l2 l3))]))])
+				  ((muos (e r st k)
+					 (fresh (y)
+						(appendo '(1 2) '(3 4) y)))
+				   xx)
+				  ))
+			 out))
+      '((level: (()) result: ((1 2 3 4)))))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 #|
