@@ -476,25 +476,42 @@
 			     ((42 23) (42 23) 42 ((42 23) (42 29))))
 			    (((42 24) (42 24) 42 ((42 24) (42 29)))
 			     ((42 24) (42 24) 42 ((42 24) (42 29))))))))
-(test "common-let-1"
+
+(test "common-let-0"
       (run 1 (out) (runo 'all
-			 '(fresh (x1 x2 x)
-				 (common-let
-				  ([appendo
-				    (rel-abs (l1 l2 l)
-					     (conde
-					      [(==mk '() l1) (==mk l2 l)]
-					      [(fresh (a d l3)
-						      (==mk (a . d) l1)
-						      (==mk (a . l3) l)
-						      (appendo d l2 l3))]))])
-				  ((muos (e r st k)
-					 (fresh (y)
-						(appendo '(1 2) '(3 4) y)))
+			 '(common-let
+			   ([f
+			     (rel-abs (x1 x2)
+				      (==mk x1 (42 x2 x2 42)))])
+			   (fresh (x1 x2 x)
+				  ((muo (e s/c r st k)
+					(fresh (y)
+					       (f y e)))
 				   xx)
 				  ))
 			 out))
       '((level: (()) result: ((1 2 3 4)))))
+
+(test "common-let-1"
+      (run 1 (out) (runo 'all
+			 '(common-let
+			   ([appendo
+			     (rel-abs (l1 l2 l)
+				      (conde
+				       [(==mk '() l1) (==mk l2 l)]
+				       [(fresh (a d l3)
+					       (==mk (a . d) l1)
+					       (==mk (a . l3) l)
+					       (appendo d l2 l3))]))])
+			   (fresh (x1 x2 x)
+				  ((muo (e s/c r st k)
+					(fresh (yyy)
+					       (appendo '(1 2) yyy '(1 2 42 45 47))))
+				   xx)
+				  ))
+			 out))
+      '((level: (()) result: ((1 2 3 4)))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 #|

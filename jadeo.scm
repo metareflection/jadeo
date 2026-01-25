@@ -749,11 +749,14 @@ env^: ~s\n store^: ~s\n out: ~s\n v-out: ~s\n\n"
    [(== (list 'quote tm^) tm)]
    [(literalo tm)
     (== tm tm^)]
+   [(var?o tm)
+    (== tm tm^)]
    [(symbolo tm)
     (lookupo tm env store cenv cstore tm^)
     ]
    [(fresh (tm1 tm2 tm1^ tm2^)
 	   (=/= 'quote tm1)
+	   (=/= 'var tm1)
 	   (== (cons tm1 tm2) tm)
 	   (== (cons tm1^ tm2^) tm^)
 	   (tm-lookupo tm1 env store cenv cstore tm1^)
