@@ -293,6 +293,10 @@ args: ~s\n k: ~s\n out: ~s\n v-out: ~s\n\n"
 		    (tm-lookupo args env store cenv cstore args^)
 		    (apply-rel-subro rel-subr-name args^ s/c env store k
 				     cenv cstore mc out v-out))]
+	    [(fresh (rel-fsubr-name)
+		    (== rel (list 'rel-fsubr rel-fsubr-name))
+		    (apply-rel-fsubro rel-fsubr-name args s/c env store k
+				     cenv cstore mc out v-out))]
 	    [(fresh (app-gen-name paras body)
 		    (== rel (list 'app-gen app-gen-name))
 		    (== (list paras body) args)
@@ -418,7 +422,18 @@ args: ~s\n k: ~s\n out: ~s\n v-out: ~s\n\n"
 	   (== (list 'muos-reifier paras body) v-out)])
 	 (== (answer v-out store cstore) ans)
 	 (apply-rel-ko cont ans mc out)))
-
+(define (apply-rel-fsubro rel-name args s/c env store cont cenv cstore mc out v-out)
+  (conde
+   [(fresh (v1 v2 sub count sub^ ans)
+	   (== '==q rel-name)
+	   (== (list v1 v2) args)
+	   (== (cons sub count) s/c)
+	   (conde
+            [(== #f sub^) (== '() v-out)]
+            [(=/= #f sub^) (== `((,sub^ . ,count)) v-out)])
+	   (unifyo v1 v2 sub sub^)
+	   (== (answer v-out store cstore) ans)
+           (apply-rel-ko cont ans mc out))]))
 (define (apply-rel-subro rel-name args s/c env store cont cenv cstore mc out v-out)
   (conde
    [(fresh (v1 v2 sub count sub^ ans)
@@ -437,7 +452,6 @@ args: ~s\n k: ~s\n out: ~s\n v-out: ~s\n\n"
 	    v1 v2 store cont out v-out)
 	   (== (answer v-out store cstore) ans)
            (apply-rel-ko cont ans mc out))]
-   
   
    [(fresh (e r st k out-para lv e^ r^ st^ k^
 	      sub count
@@ -1335,22 +1349,24 @@ env^: ~s\n store^: ~s\n out: ~s\n v-out: ~s\n\n"
          (reifyo d lv vd))]))
 
 (define mk-init-env-names
-  '(==mk conj disj call/fresh
-	 fresh conj* conde
-	 let letrec
-	 common-let delay
-	 rel-abs muo muos
-	 meaning-scm
-	 meaning-mk
-	 eval-scm
-	 eval-scmo
-	 new-scm
-	 new-mk
-	 apply-cont-jmp
-	 apply-cont-psh
-	 add-exit-lv-conto))
+  '(==mk ==q
+    conj disj call/fresh
+    fresh conj* conde
+    let letrec
+    common-let delay
+    rel-abs muo muos
+    meaning-scm
+    meaning-mk
+    eval-scm
+    eval-scmo
+    new-scm
+    new-mk
+    apply-cont-jmp
+    apply-cont-psh
+    add-exit-lv-conto))
 (define mk-init-store-contents
   '((rel-subr ==mk)
+    (rel-fsubr ==q)
     (goal-comb conj)
     (goal-comb disj)
     (goal-comb call/fresh)
@@ -1376,13 +1392,14 @@ env^: ~s\n store^: ~s\n out: ~s\n v-out: ~s\n\n"
     ))
 
 (define scm-init-env-names
-  '(cons car cdr null? quote set! lambda list muso
+  '(cons car cdr null? if quote set! lambda list muso
 	 meaning-scm meaning-mk new-mk rei-lookup let letrec))
 (define scm-init-store-contents
   '((subr cons)
     (subr car)
     (subr cdr)
     (subr null?)
+    (fsubr if)
     (fsubr quote)
     (fsubr set!)
     (fsubr lambda)
