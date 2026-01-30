@@ -5,6 +5,8 @@
 
 (define debug-gexp #f)
 
+(define debug-meta #t)
+
 (define trace-gexp #f)
 (define (trace-on) (set! trace-gexp #t))
 (define (trace-off) (set! trace-gexp #f))
@@ -17,7 +19,10 @@
 	      (and (equal? 'gexp (car args))
 		   debug-gexp)
 	      (and (equal? 'trace-gexp (car args))
-		   trace-gexp))
+		   trace-gexp)
+	      (and (equal? 'meta (car args))
+		   debug-meta)
+	      )
 	  (begin
             (apply printf (map (lambda (x) (walk* x (state-S st))) (cdr args)))
             st)
@@ -249,6 +254,9 @@
 	 (== (list cstore-addrs cstore-contents) cstore)
 	 (conde
 	  [(fresh (ans)
+		  (debugo 'meta
+		   "\neval-gexp symbol:\n current-level: ~s\n gexp: ~s\n s/c: ~s\n env-ids: ~s\n store-contents: ~s\n cont: ~s\n out: ~s\n\n"
+		   lv gexp s/c env-ids store-contents cont out)
 		  (symbolo gexp)         
 		  (lookupo gexp env store cenv cstore rel-val)
 		  (== v-out rel-val)
@@ -286,11 +294,12 @@
 	   (conde
 	    [(fresh (rel-subr-name args^)
 		    (== rel (list 'rel-subr rel-subr-name))
-		    (debugo 'gexp
-		     "\napplication-rel-k subro:\n subr-name: ~s\n 
-args: ~s\n k: ~s\n out: ~s\n v-out: ~s\n\n"
-		     rel-subr-name args k out v-out)
+		    
 		    (tm-lookupo args env store cenv cstore args^)
+		    (debugo 'meta
+		     "\napplication-rel-k subro:\n subr-name: ~s\n 
+args^: ~s\n k: ~s\n out: ~s\n v-out: ~s\n\n"
+		     rel-subr-name args^ k out v-out)
 		    (apply-rel-subro rel-subr-name args^ s/c env store k
 				     cenv cstore mc out v-out))]
 	    [(fresh (rel-fsubr-name)
@@ -447,7 +456,7 @@ args: ~s\n k: ~s\n out: ~s\n v-out: ~s\n\n"
             [(== #f sub^) (== '() v-out)]
             [(=/= #f sub^) (== `((,sub^ . ,count)) v-out)])
 	   (unifyo v1 v2 sub sub^)
-	   (debugo 'gexp
+	   (debugo 'meta
 	    "\napply-rel-subr ==mk out:\n v1: ~s\n v2: ~s\n store: ~s\n cont: ~s\n out: ~s\n v-out: ~s\n\n"
 	    v1 v2 store cont out v-out)
 	   (== (answer v-out store cstore) ans)
@@ -460,10 +469,10 @@ args: ~s\n k: ~s\n out: ~s\n v-out: ~s\n\n"
 	   (== (list e r st k out-para) args)
 	   (== (cons sub count) s/c)
 	   (get-meta-level mc (peano-incr lv))
-	   (walko e sub e^)
-	   (walko r sub r^)
-	   (walko st sub st^)
-	   (walko k sub k^)
+	   (walk*o e sub e^)
+	   (walk*o r sub r^)
+	   (walk*o st sub st^)
+	   (walk*o k sub k^)
 	   (== (list 'unify-with-k (list out-para s/c) cont) cont^)
 	   (meaning-scm-o e^ r^ st^ k^ (list 'kanren lv s/c env store cont^)
 			  cenv cstore mc out meaning-out)
@@ -474,10 +483,10 @@ args: ~s\n k: ~s\n out: ~s\n v-out: ~s\n\n"
 	   (== (list e r st k) args)
 	   (== (cons sub count) s/c)
 	   (get-meta-level mc (peano-incr lv))
-	   (walko e sub e^)
-	   (walko r sub r^)
-	   (walko st sub st^)
-	   (walko k sub k^)
+	   (walk*o e sub e^)
+	   (walk*o r sub r^)
+	   (walk*o st sub st^)
+	   (walk*o k sub k^)
 	   (meaning-scm-o e^ r^ st^ k^ (list 'kanren lv s/c env store cont)
 			  cenv cstore mc out v-out)
 	   )]
@@ -487,11 +496,11 @@ args: ~s\n k: ~s\n out: ~s\n v-out: ~s\n\n"
 	   (== (list e s/c-arg r st k) args)
 	   (== (cons sub count) s/c)
 	   (get-meta-level mc (peano-incr lv))
-	   (walko e sub e^)
-	   (walko s/c-arg sub s/c^)
-	   (walko r sub r^)
-	   (walko st sub st^)
-	   (walko k sub k^)
+	   (walk*o e sub e^)
+	   (walk*o s/c-arg sub s/c^)
+	   (walk*o r sub r^)
+	   (walk*o st sub st^)
+	   (walk*o k sub k^)
 	   (meaning-mk-o e^ s/c^ r^ st^ k^ (list 'kanren lv s/c env store cont)
 			 cenv cstore mc out v-out)
 	   )]
@@ -500,7 +509,7 @@ args: ~s\n k: ~s\n out: ~s\n v-out: ~s\n\n"
 	   (== (list e) args)
 	   (== (cons sub count) s/c)
 	   (get-meta-level mc (peano-incr lv))
-	   (walko e sub e^)
+	   (walk*o e sub e^)
 	   (meaning-mk-o e^ s/c env store 'exit-level-k
 			 (list 'kanren lv s/c env store cont)
 			 cenv cstore mc out v-out)
@@ -509,9 +518,13 @@ args: ~s\n k: ~s\n out: ~s\n v-out: ~s\n\n"
 	   (== 'eval-scm rel-name)
 	   (== (list e) args)
 	   (== (cons sub count) s/c)
+	   (debugo 'meta
+		   "\neval-scm 0:\n e: ~s\n 
+env: ~s\n store: ~s\n out: ~s\n v-out: ~s\n\n"
+		   e env store out v-out)
 	   (get-meta-level mc (peano-incr lv))
 	   (mk-r/st-to-scm-r/sto env store env^ store^)
-	   (walko e sub e^)
+	   (walk*o e sub e^)
 	   (meaning-scm-o e^ env^ store^ 'exit-level-k
 			  (list 'kanren lv s/c env store cont)
 			  cenv cstore mc out v-out)
@@ -534,7 +547,7 @@ env: ~s\n store: ~s\n out: ~s\n v-out: ~s\n\n"
 	    "\neval-scmo 1:\n e: ~s\n 
 env^: ~s\n store^: ~s\n out: ~s\n v-out: ~s\n\n"
 	    e env^ store^ out v-out)
-	   (walko e sub e^)
+	   (walk*o e sub e^)
 	   (meaning-scm-o e^ env^ store^ 'exit-level-k
 			  (list 'kanren lv s/c env store cont^)
 			  cenv cstore mc out meaning-out)
@@ -544,7 +557,7 @@ env^: ~s\n store^: ~s\n out: ~s\n v-out: ~s\n\n"
 	   (== (list e) args)
 	   (== (cons sub count) s/c)
 	   (get-meta-level mc (peano-incr lv))
-	   (walko e sub e^)
+	   (walk*o e sub e^)
 	   (meaning-scm-o e^ scm-init-env scm-init-store 'id-cont
 			  (list 'kanren lv s/c env store cont)
 			  cenv cstore mc out v-out)
@@ -554,7 +567,7 @@ env^: ~s\n store^: ~s\n out: ~s\n v-out: ~s\n\n"
 	   (== (list e) args)
 	   (== (cons sub count) s/c)
 	   (get-meta-level mc (peano-incr lv))
-	   (walko e sub e^)
+	   (walk*o e sub e^)
 	   (meaning-mk-o e^ init-s/c mk-init-env mk-init-store 'id-cont
 			 (list 'kanren lv s/c env store cont)
 			 cenv cstore mc out v-out)
@@ -765,7 +778,10 @@ env^: ~s\n store^: ~s\n out: ~s\n v-out: ~s\n\n"
     (== tm tm^)]
    [(var?o tm)
     (== tm tm^)]
-   [(symbolo tm)
+   [(debugo 'm
+	  "\n tm-lookupo:\n tm: ~s\n env: ~s\n store: ~s\n\n"
+	  tm env store)
+    (symbolo tm)
     (lookupo tm env store cenv cstore tm^)
     ]
    [(fresh (tm1 tm2 tm1^ tm2^)
@@ -849,7 +865,7 @@ env^: ~s\n store^: ~s\n out: ~s\n v-out: ~s\n\n"
 (define  (meaning-scm-o e r st k cur-level cenv cstore mc out v-out)
   (fresh (e-out new-mc)
 	 (== (cons cur-level mc) new-mc)
-	 (debugo 'gexp
+	 (debugo 'meta
 	  "\nmeaning-scm-o:\n out: ~s\n v-out: ~s\n\n"
 	  out v-out)
 	 (eval-scm-auxo e r st k cenv cstore new-mc out e-out)
@@ -888,7 +904,7 @@ env^: ~s\n store^: ~s\n out: ~s\n v-out: ~s\n\n"
              (apply-ko cont ans mc out))]
      [(fresh (f args v-out-ignore)
 	     (== (cons f args) exp)
-	     (debugo 'scm
+	     (debugo 'meta
 	      "\neval-scm-auxo:\n exp: ~s\n env: ~s\n store: ~s\n cont: ~s\n out: ~s\n v-out: ~s\n\n"
 	      exp env store cont out v-out)
 	     (eval-scm-auxo f env store
@@ -1003,14 +1019,24 @@ env^: ~s\n store^: ~s\n out: ~s\n v-out: ~s\n\n"
 	     (meaning-mk-o e-v init-s/c mk-init-env mk-init-store
 			   'id-cont (list 'scheme level env store k)
 			   cenv cstore mc out v-out))]
-     [(fresh (k e r st store v-out cenv cstore)
-	     (== (list 'rei-lookup-k (list cenv v-out) k) cont)
+     [(fresh (k e r st store v-out cstore)
+	     (== (list 'rei-lookup-k (list v-out) k) cont)
 	     (== (answer (list e r st) store cstore) v/s)
-	     (lookupo e r st cenv cstore v-out)
+	     (lookupo e r st empty-env cstore v-out)
 	     (debugo 'scm
 	      "\nrei-lookup-k:\n e: ~s\n r: ~s\n st: ~s\n k: ~s\n out: ~s\n v-out: ~s\n\n"
 	      e r st k out v-out)
 	     (apply-ko k (answer v-out store cstore) mc out))]
+     [(fresh (k x r st v store cstore ans st^ addr)
+	     (== (list 'rei-set-st-k (list st^) k) cont)
+	     (== (answer (list x r st v) store cstore) v/s)
+	     (ext-storeo addr v st st^)
+	     (lookup-env-only-auxo x r addr)
+	     (== ans (answer st^ store cstore))
+	     (debugo 'meta
+	      "\napply-ko rei-set-st-k 0:\n x: ~s\n r: ~s\n st: ~s\n k: ~s\n out: ~s\n st^ ~s\n\n"
+	      x r st k out st^)
+	     (apply-ko k ans mc out))]
      [(fresh (ids let-args-vals body env store k env^ store^ v-out cenv cstore)
 	     (== (list 'let-k (list ids body env cenv v-out) k) cont)
 	     (== (answer let-args-vals store cstore) v/s)
@@ -1149,11 +1175,17 @@ env^: ~s\n store^: ~s\n out: ~s\n v-out: ~s\n\n"
 			  cenv cstore mc out e-v)
 	   
 	   )]
-   [(fresh (e r st e^ r^ st^ e-res args-vals)
+   [(fresh (e r st args-vals)
 	   (== 'rei-lookup fsubr-name)
 	   (== (list e r st) args)
 	   (eval-list-scmo args env store
-			   (list 'rei-lookup-k (list cenv v-out) cont)
+			   (list 'rei-lookup-k (list v-out) cont)
+			   cenv cstore mc out args-vals))]
+   [(fresh (e r st v args-vals)
+	   (== 'rei-set-st fsubr-name)
+	   (== (list e r st v) args)
+	   (eval-list-scmo args env store
+			   (list 'rei-set-st-k (list v-out) cont)
 			   cenv cstore mc out args-vals))]
    [(fresh (pairs body ids bodies bodies-vals)
 	   (== 'let fsubr-name)
@@ -1393,7 +1425,7 @@ env^: ~s\n store^: ~s\n out: ~s\n v-out: ~s\n\n"
 
 (define scm-init-env-names
   '(cons car cdr null? if quote set! lambda list muso
-	 meaning-scm meaning-mk new-mk rei-lookup let letrec))
+	 meaning-scm meaning-mk new-mk rei-lookup rei-set-st let letrec))
 (define scm-init-store-contents
   '((subr cons)
     (subr car)
@@ -1409,6 +1441,7 @@ env^: ~s\n store^: ~s\n out: ~s\n v-out: ~s\n\n"
     (fsubr meaning-mk)
     (fsubr new-mk)
     (fsubr rei-lookup)
+    (fsubr rei-set-st)
     (fsubr let)
     (fsubr letrec)))
 (define (iota n)
@@ -1436,6 +1469,7 @@ env^: ~s\n store^: ~s\n out: ~s\n v-out: ~s\n\n"
        (== (cons a d) mc)
        (=/= a 'next-meta-cont)
        (== mc fc))]))
+#|
 (define (gen-meta-conto level mc)
   (fresh (v-out1 v-out2 v-out3)
 	 (== `((kanren ,level ,init-s/c ,mk-init-env ,mk-init-store id-cont)
@@ -1444,6 +1478,12 @@ env^: ~s\n store^: ~s\n out: ~s\n v-out: ~s\n\n"
 	       (scheme ,(peano-incr (peano-incr level))
 		       ,scm-init-env ,scm-init-store id-cont)
 	       . (next-meta-cont ,(peano-incr (peano-incr (peano-incr level))))) mc)))
+|#
+(define (gen-meta-conto level mc)
+  (fresh (v-out1 v-out2 v-out3)
+	 (== `((kanren ,level ,init-s/c ,mk-init-env ,mk-init-store id-cont)
+	       . (next-meta-cont ,(peano-incr level))) mc)))
+#|
 (define (get-meta-level mc lv)
   (fresh (fc s/c env store cont fc^)
 	 (meta-cont-forceo mc fc)
@@ -1465,6 +1505,15 @@ env^: ~s\n store^: ~s\n out: ~s\n v-out: ~s\n\n"
 	   (debugo 'gexp
 	    "\nget-meta-level scheme:\n lv: ~s\n mc: ~s\n fc: ~s\n\n"
 	    lv mc fc)])))
+|#
+(define (get-meta-level mc lv)
+  (fresh (fc s/c env store cont fc^)
+	 (meta-cont-forceo mc fc)
+	 (== `((kanren
+		,lv ,s/c ,env
+		,store ,cont)
+		 . ,fc^) fc)
+	 ))
 (define (runo answer-count gexp out)
   (fresh (mc^ mc init-env init-store lv lv/v-out v-out)
 	 (debugo 'gexp
