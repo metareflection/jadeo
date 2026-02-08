@@ -1,3 +1,19 @@
+(define test-failed #f)
+
+(define-syntax test
+  (syntax-rules ()
+    ((_ title tested-expression expected-result)
+     (begin
+       (printf "Testing ~s\n" title)
+       (let* ((expected expected-result)
+              (produced tested-expression))
+         (or (equal? expected produced)
+             (begin
+               (set! test-failed #t)
+               (printf "Failed: ~s~%Expected: ~s~%Computed: ~s~%"
+                       'tested-expression expected produced))))))))
+
+
 #|
 (run 1 (out)
      (runo 'all
@@ -59,28 +75,15 @@
 		     (set-meta-a-and-eval (a a) ==mk b)
 		     (==meta b meta-a)))
 	   out))
+
 |#
-
-
+;;#|
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(define test-failed #f)
 
-(define-syntax test
-  (syntax-rules ()
-    ((_ title tested-expression expected-result)
-     (begin
-       (printf "Testing ~s\n" title)
-       (let* ((expected expected-result)
-              (produced tested-expression))
-         (or (equal? expected produced)
-             (begin
-               (set! test-failed #t)
-               (printf "Failed: ~s~%Expected: ~s~%Computed: ~s~%"
-                       'tested-expression expected produced))))))))
-(trace-on)
-(test "meaning-mk-0"
+(trace-off)
+(test "meaning-mk-3"
       (run 1 (out) (runo 'all
-			 '(fresh (c d)
+			 '(fresh (a c d)
 				 ((muo (e s/c r st k)
 				       (fresh (tm0)
 					      (==mk e tm0)
@@ -88,34 +91,11 @@
 					      ))
 				  conj (==mk 42 d) (==mk c (d (d 3)))
 				  )
-				 ) out))
-      '((level: () result: (((42 (42 3)) (42 3))))))
-(test "meaning-mk-1"
-      (run 1 (out) (runo 'all
-			 '(fresh (c d)
-				 ((muo (e s/c r st k)
-				       (fresh (tm0 tm1 tm2)
-					      (==mk e (tm0 tm1 tm2))
-					      (meaning-mk (tm0 tm1 tm2) s/c r st k)
-					      ))
-				  conj (==mk 42 d) (==mk c (d (d 3)))
-				  )
-				 ) out))
-      '((level: () result: (((42 (42 3)) (42 3))))))
-#|
-(test "meaning-mk-3"
-      (run 1 (out) (runo 'all
-			 '(fresh (a b c d)
-				 ((muo (e s/c r st k)
-				       (fresh (tm0 tm1 tm2)
-					      (==mk e (tm0 tm1 tm2))
-					      (meaning-mk (tm0 tm1 tm2) s/c r st k)
-					      ))
-				  conj (==mk 42 d) (==mk c (d (d 3)))
-				  )
-				 (==mk (d b) c)
-				 (==mk a (c b))
-				 ) out))
+				 (==mk c a)
+				 ;;(==mk (d b) c)
+				 ;;(==mk a (c b))
+				 )
+			 out))
       '((level: () result: (((42 (42 3)) (42 3))))))
 (trace-off)
 (test
@@ -152,7 +132,7 @@
 							    (append sub0 sub1))])
 				       (meaning-mk e1 s/c1 r1 st1^ k1)))))
 			     ==mk (sub count) s/c)
-			    
+			    ;; s/c is cons
 			    (meaning-mk
 			     ('==q (eval-scm '(rei-lookup (car e) r st))
 				   tm1)
@@ -170,5 +150,5 @@
 		     (==meta b meta-a)))
 	    out))
  '(1 2 3))
-|#
+;;|#
 ;; should give (42 43)
