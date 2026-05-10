@@ -2,7 +2,7 @@
 ;; added lookup for s/c
 ;; addresses represented by peano numbers
 
-(define debug-lookup #f)
+(define debug-lookup #t)
 (define debug-lookupo
   (lambda args
     (lambda (st)
@@ -203,8 +203,8 @@
 	   (symbolo x)
 	   ;;(peano-no addr)
 	   (debug-lookupo
-	    "\nlookupo:\n x: ~s\n env: ~s\n store: ~s\n t: ~s\n\n"
-	    x env store t)
+	    "\nlookupo:\n x: ~s\n env: ~s\n store: ~s\n cenv: ~s\n cstore: ~s\n t: ~s\n\n"
+	    x env store cenv cstore t)
 	   (conde
 	    [(lookup-env-auxo x env store addr)
 	     (lookup-store-auxo addr store t)]
