@@ -49,53 +49,49 @@
       (runo 'all
 	    '(common-let
 	      ([== 
-		(rel-abs
-		 (a b)
-		 (fresh (out)
-			(eval-scmo a out)
-			(eval-scmo b out)))]
+		(muo (e s/c r st k)
+		     (fresh (a b out0 out1)
+			    (==mk (a b) e)
+			    (meaning-scmo a r st 'exit-level-k out0)
+			    (meaning-scmo b r st 'exit-level-k out1)
+			    (meaning-mk ('==mk ('quote out0) ('quote out1)) s/c r st k)
+			    ))]
+	       [eval 
+		(muo (e s/c r st k)
+		     (fresh (e-fst out out-var)
+			    (== (cons e-fst '()) e)
+			    (meaning-scmo e-fst r st 'exit-level-k out-var)
+			    ;; doesn't work, want out-var's corresponding thing in this level's s/c (g e-snd e-rst) to subst with (
+			    (rei-substo out-var s/c out)
+			    ;;(eval-scmo '(rei-subst out-var s/c) out)
+			    ;; 8-11, 9-e^, 8isout1
+			    ;; meaning-scmo e-fst is working and gives e^'s var, but after uni with out-var
+			    ;; out-var stores e^'s var's sub, which is out1
+			    (meaning-mk out s/c r st k)
+			    ))]
 	       [f
 		(muo (e s/c r st k)
-		     (fresh (e-fst e-snd e-rst)
-			    ;;(== (cons e-fst (cons e-snd '())) e)
-			    (==mk (e-fst e-snd) e)
+		     (fresh (e-fst e-snd e-rst e^)
+			    (== (cons e-fst (cons e-snd e-rst)) e)
+			    (eval (cons 'g (cons e-snd e-rst)))
+			    (meaning-mk ('== e-fst e-snd) s/c r st k)
+			    ))]
+	       [g
+		(muo (e s/c r st k)
+		     (fresh (e-fst e-snd)
+			    (== (cons e-fst (cons e-snd '())) e)
 			    ;;(eval-mk (eval-scm (cons 'g (cons e-snd e-rst))))
-			    (meaning-mk ('== ('quote e-fst) ('quote e-snd)) s/c r st k)
+			    (meaning-mk ('== e-fst e-snd) s/c r st k)
 			    ))])
 	      (fresh
-	       (c d)
-	       (f c 42)
+	       (a b c)
+	       (f (list b a) c (list (cons 42 43) (cons 44 45)))
 	       ))
 	    out))
- '())
+ '((level: () result: (42))))
 ;;|#
 #|
-non-terminate:
-eval-gexp:
- current-level: ()
- gexp: (== c 42)
- s/c: (() (()))
- env-ids: (d c ==mk ==q conj disj call/fresh fresh conj* conde let letrec common-let delay rel-abs muo muos meaning-scm meaning-mk eval-scm eval-scmo new-scm new-mk apply-cont-jmp apply-cont-psh add-exit-lv-conto)
- cenv-ids: (g f ==)
- cont: id-cont
- mc: ((kanren (()) ((((var (()) (())) . 42) ((var (()) ()) . c)) ((()))) ((e-rst e-snd e-fst k st r s/c e ==mk ==q conj disj call/fresh fresh conj* conde let letrec common-let delay rel-abs muo muos meaning-scm meaning-mk eval-scm eval-scmo new-scm new-mk apply-cont-jmp apply-cont-psh add-exit-lv-conto) (((((((((((((((((((((((((((((((((())))))))))))))))))))))))))))))))) (((((((((((((((((((((((((((((((()))))))))))))))))))))))))))))))) ((((((((((((((((((((((((((((((())))))))))))))))))))))))))))))) (((((((((((((((((((((((((()))))))))))))))))))))))))) ((((((((((((((((((((((((((())))))))))))))))))))))))))) (((((((((((((((((((((((((((()))))))))))))))))))))))))))) ((((((((((((((((((((((((((((())))))))))))))))))))))))))))) (((((((((((((((((((((((((((((()))))))))))))))))))))))))))))) 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)) ((((((((((((((((((((((((((((((((((())))))))))))))))))))))))))))))))) (((((((((((((((((((((((((((((((()))))))))))))))))))))))))))))))) ((((((((((((((((((((((((((((((())))))))))))))))))))))))))))))) (((((((((((((((((((((((((()))))))))))))))))))))))))) ((((((((((((((((((((((((((())))))))))))))))))))))))))) (((((((((((((((((((((((((((()))))))))))))))))))))))))))) ((((((((((((((((((((((((((((())))))))))))))))))))))))))))) (((((((((((((((((((((((((((((()))))))))))))))))))))))))))))) 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1) ((var (()) ((()))) (var (()) (())) (var (()) ()) id-cont ((((((((((((((((((((((((((((())))))))))))))))))))))))))) (((((((((((((((((((((((((()))))))))))))))))))))))))) 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1) (((rei . var) () (())) ((rei . var) () ()) (rel-subr ==mk) (rel-fsubr ==q) (goal-comb conj) (goal-comb disj) (goal-comb call/fresh) (goal-comb fresh) (goal-comb conj*) (goal-comb conde) (goal-comb let) (goal-comb letrec) (goal-comb common-let) (goal-comb delay) (app-gen rel-abs) (app-gen muo) (app-gen muos) (rel-subr meaning-scm) (rel-subr meaning-mk) (rel-subr eval-scm) (rel-subr eval-scmo) (rel-subr new-scm) (rel-subr new-mk) (rel-subr apply-cont-jmp) (rel-subr apply-cont-psh) (rel-subr add-exit-lv-conto))) ((d c ==mk ==q conj disj call/fresh fresh conj* conde let letrec common-let delay rel-abs muo muos meaning-scm meaning-mk eval-scm eval-scmo new-scm new-mk apply-cont-jmp apply-cont-psh add-exit-lv-conto) (((((((((((((((((((((((((((())))))))))))))))))))))))))) (((((((((((((((((((((((((()))))))))))))))))))))))))) 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)) (() (())) (c 42) (rel-subr ==mk) (rel-fsubr ==q) (goal-comb conj) (goal-comb disj) (goal-comb call/fresh) (goal-comb fresh) (goal-comb conj*) (goal-comb conde) (goal-comb let) (goal-comb letrec) (goal-comb common-let) (goal-comb delay) (app-gen rel-abs) (app-gen muo) (app-gen muos) (rel-subr meaning-scm) (rel-subr meaning-mk) (rel-subr eval-scm) (rel-subr eval-scmo) (rel-subr new-scm) (rel-subr new-mk) (rel-subr apply-cont-jmp) (rel-subr apply-cont-psh) (rel-subr add-exit-lv-conto))) (bind-rec-k (() (meaning-mk ((quote ==) e-fst e-snd) s/c r st k) ((e-rst e-snd e-fst k st r s/c e ==mk ==q conj disj call/fresh fresh conj* conde let letrec common-let delay rel-abs muo muos meaning-scm meaning-mk eval-scm eval-scmo new-scm new-mk apply-cont-jmp apply-cont-psh add-exit-lv-conto) (((((((((((((((((((((((((((((((((())))))))))))))))))))))))))))))))) (((((((((((((((((((((((((((((((()))))))))))))))))))))))))))))))) ((((((((((((((((((((((((((((((())))))))))))))))))))))))))))))) (((((((((((((((((((((((((()))))))))))))))))))))))))) ((((((((((((((((((((((((((())))))))))))))))))))))))))) (((((((((((((((((((((((((((()))))))))))))))))))))))))))) ((((((((((((((((((((((((((((())))))))))))))))))))))))))))) (((((((((((((((((((((((((((((()))))))))))))))))))))))))))))) 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)) ((g f ==) ((()) ((())) (((()))))) #((unbound) (scope) 1)) id-cont)) next-meta-cont ((())))
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-terminate:
-eval-gexp:
- current-level: ()
- gexp: (== c 42)
- s/c: (() (()))
- env-ids: (d c ==mk ==q conj disj call/fresh fresh conj* conde let letrec common-let delay rel-abs muo muos meaning-scm meaning-mk eval-scm eval-scmo new-scm new-mk apply-cont-jmp apply-cont-psh add-exit-lv-conto)
- cenv-ids: (g f ==)
- cont: id-cont
- mc: (next-meta-cont (()))
- rel-val: #((unbound) (scope) 4007)
- out: #((unbound) (scope) 2)
- v-out: #((unbound) (scope) 1)
 
- rel-val: #((unbound) (scope) 158782)
- out: #((unbound) (scope) 8410)
- v-out: #((unbound) (scope) 158764)
 (test
  "multi-meta-unify"
  (run 1 (out)

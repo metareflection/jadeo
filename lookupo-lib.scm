@@ -2,7 +2,7 @@
 ;; added lookup for s/c
 ;; addresses represented by peano numbers
 
-(define debug-lookup #t)
+(define debug-lookup #f)
 (define debug-lookupo
   (lambda args
     (lambda (st)
