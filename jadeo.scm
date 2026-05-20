@@ -7,7 +7,7 @@
 
 (define debug-meta #f)
 
-(define trace-gexp #t)
+(define trace-gexp #f)
 (define (trace-off) (set! trace-gexp #f))
 (define (trace-on) (set! trace-gexp #t))
 
@@ -255,16 +255,7 @@
 	 (== (list cenv-ids cenv-addrs) cenv)
 	 (== (list cstore-addrs cstore-contents) cstore)
 	 (get-meta-level mc (peano-incr lv))
-	 
-	 #|
-	 (debugo 'trace
-		 "\neval-gexp:\n current-level: ~s\n gexp: ~s\n s/c: ~s\n env-ids: ~s\n store-contents: ~s\n cont: ~s\n out: ~s\n\n"
-		 lv gexp s/c env-ids store-contents cont out)
-(debugo 'trace
-		 "\ndebug-gexp-1:\n current-level: ~s\n gexp: ~s\n \n"
-		 lv gexp)
-	 |#
-	 
+	  
 	 (conde
 	  [(fresh (ans)
 		  (symbolo gexp)
@@ -274,9 +265,6 @@
 		  (apply-rel-ko cont ans mc out))]
 	  [(fresh (rel-e args)
 		  (== (cons rel-e args) gexp)
-		  #|
-		  
-		  |#
 		  (debugo 'trace
 		 "\neval-gexp:\n current-level: ~s\n gexp: ~s\n s/c: ~s\n env-ids: ~s\n cenv: ~s\n out: ~s\n v-out: ~s\n \n"
 		 lv gexp s/c env-ids cenv out v-out)
@@ -288,7 +276,6 @@
   (conde
    [(fresh (val store cstore lv)
            (== 'id-cont cont)
-	   
 	   (get-meta-level mc (peano-incr lv))
            (debugo 'meta
 	    "\napply-rel-ko id-cont 1:\n val/store: ~s\n out: ~s\n\n"
@@ -488,7 +475,6 @@ args: ~s\n k: ~s\n out: ~s\n v-out: ~s\n\n"
 	   (reify-tmo sub-arg^ sub-arg)
 	   (walk*-reio e sub e^)
 	   (walk*-reio e^ sub-arg^ e^^)
-	   
 	   (conde
             [(== #f sub^) (== '() v-out)]
             [(=/= #f sub^) (== `((,sub^ . ,count)) v-out)])
@@ -608,7 +594,6 @@ args: ~s\n k: ~s\n out: ~s\n v-out: ~s\n\n"
 	   (get-meta-level mc (peano-incr lv))
 	   (walk*-reio e sub e^)
 	   (meaning-scm-o e^ scm-init-env scm-init-store 'id-cont
-	   ;;(meaning-scm-o e^ empty-env empty-store 'id-cont
 			  (list 'kanren lv s/c env store cont)
 			  cenv cstore mc out v-out)
 	   )]
@@ -618,7 +603,6 @@ args: ~s\n k: ~s\n out: ~s\n v-out: ~s\n\n"
 	   (== (cons sub count) s/c)
 	   (get-meta-level mc (peano-incr lv))
 	   (walk*-reio e sub e^)
-	   ;;(meaning-mk-o e^ init-s/c empty-env empty-store 'id-cont
 	   (meaning-mk-o e^ init-s/c mk-init-env mk-init-store 'id-cont
 			 (list 'kanren lv s/c env store cont)
 			 cenv cstore mc out v-out)
@@ -991,7 +975,6 @@ args: ~s\n k: ~s\n out: ~s\n v-out: ~s\n\n"
 	 (== (cons (list 'kanren upper-level upper-s/c upper-env upper-store upper-cont)
 		   upper-meta-cont) forced-mc)
 	 (meta-cont-forceo mc forced-mc)
-	 
 	 (reify-tmo s/c s/c^)
 	 (debugo 'meta
 		 "\napply-muo-reifiero 0:\n s/c: ~s\n s/c^: ~s\n \n"
@@ -1000,12 +983,10 @@ args: ~s\n k: ~s\n out: ~s\n v-out: ~s\n\n"
 		 "\napply-muo-reifiero 2:\n store: ~s\n store^: ~s\n \n"
 		 store store^)
 	 (reify-tmo store store^)
-	 
 	 (reify-tmo cont cont^)
 	 (debugo 'meta
 		 "\napply-muo-reifiero 3:\n cont: ~s\n cont^: ~s\n \n"
 		 cont cont^)
-	
 	 (exts-env-storeo upper-env upper-store para*
 			  (list args s/c^ env store^ cont^)
 			  env-res store-res)
@@ -1034,23 +1015,10 @@ args: ~s\n k: ~s\n out: ~s\n v-out: ~s\n\n"
 
 (define  (meaning-scm-o e r st k cur-level cenv cstore mc out v-out)
   (fresh (e-out new-mc)
-	 
 	 (== (cons cur-level mc) new-mc)
 	 (debugo 'meta
 		 "\nmeaning-scm-o 0:\n mc: ~s\n r: ~s\n \n"
 		 mc r)
-	 #|
-	 (reify-tmo r r^)
-	 
-	 (reify-tmo st st^)
-	 (debugo 'meta
-		 "\nmeaning-scm-o 1:\n st: ~s\n st^: ~s\n \n"
-		 st st^)
-	 (reify-tmo k k^)
-	 (debugo 'meta
-		 "\nmeaning-scm-o 2:\n k: ~s\n k^: ~s\n \n"
-		 k k^)
-	 |#
 	 (eval-scm-auxo e r st k cenv cstore new-mc out e-out)
 	 ))
 (define (meaning-mk-o e s/c r st k cur-level cenv cstore mc out $)
@@ -1212,7 +1180,6 @@ args: ~s\n k: ~s\n out: ~s\n v-out: ~s\n\n"
      [(fresh (env k e-v store v-out level cenv cstore)
 	     (== (list 'new-mk-k (list env cenv v-out) k) cont)
 	     (== (answer e-v store cstore) v/s)
-	     ;;(meaning-mk-o e-v init-s/c empty-env empty-store
 	     (meaning-mk-o e-v init-s/c mk-init-env mk-init-store
 			   'id-cont (list 'scheme level env store k)
 			   cenv cstore mc out v-out))]
@@ -1531,11 +1498,6 @@ args: ~s\n k: ~s\n out: ~s\n v-out: ~s\n\n"
 (define (walk*-reio unwalked-v s u)
 (fresh (v)
        (walko unwalked-v s v)
-
-       #|(debugo 'scm
-	      "\nwalk*-reio:\n s: ~s\n v: ~s\n u: ~s\n\n"
-	      s v u)
-|#
        (conde
 	[(== v u)
 	 (conde
@@ -1816,7 +1778,6 @@ args: ~s\n k: ~s\n out: ~s\n v-out: ~s\n\n"
 |#
 (define (gen-meta-conto level mc)
   (fresh (v-out1 v-out2 v-out3)
-	 ;;(== `((kanren ,level ,init-s/c ,empty-env ,empty-store id-cont)
 	 (== `((kanren ,level ,init-s/c ,mk-init-env ,mk-init-store id-cont)
 	       . (next-meta-cont ,(peano-incr level))) mc)))
 #|
