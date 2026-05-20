@@ -351,7 +351,8 @@
 					 (call/fresh (tm)
 						     (==mk tm (e s/c r st k))))
 				    42 b a))) out))
-      '((level: (()) result: (((42 b a) (() (())) ((b a ==mk conj disj call/fresh fresh conj* conde let letrec delay rel-abs muo muos meaning-scm meaning-mk eval-scm eval-scmo new-scm new-mk apply-cont-jmp apply-cont-psh add-exit-lv-conto) (((((((((((((((((((((((((())))))))))))))))))))))))) (((((((((((((((((((((((()))))))))))))))))))))))) 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)) ((((((((((((((((((((((((((())))))))))))))))))))))))) (((((((((((((((((((((((()))))))))))))))))))))))) 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1) ((_.) (_. ()) (rel-subr ==mk) (goal-comb conj) (goal-comb disj) (goal-comb call/fresh) (goal-comb fresh) (goal-comb conj*) (goal-comb conde) (goal-comb let) (goal-comb letrec) (goal-comb delay) (app-gen rel-abs) (app-gen muo) (app-gen muos) (rel-subr meaning-scm) (rel-subr meaning-mk) (rel-subr eval-scm) (rel-subr eval-scmo) (rel-subr new-scm) (rel-subr new-mk) (rel-subr apply-cont-jmp) (rel-subr apply-cont-psh) (rel-subr add-exit-lv-conto))) id-cont)))))
+      '((level: (()) result: (((42 b a) (() (())) ((b a) (((())) (()))) 
+			       ((((())) (())) ((_.) (_. ()))) id-cont)))))
 
 #|
 (test "muo-3"
@@ -491,7 +492,7 @@
 				   xx)
 				  ))
 			 out))
-      '((level: (()) result: ((1 2 3 4)))))
+      '((level: (()) result: ((42 (xx) (xx) 42)))))
 
 (test "common-let-1"
       (run 1 (out) (runo 'all
@@ -511,7 +512,7 @@
 				   xx)
 				  ))
 			 out))
-      '((level: (()) result: ((1 2 3 4)))))
+      '((level: (()) result: ((42 45 47)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

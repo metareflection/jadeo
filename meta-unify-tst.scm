@@ -91,16 +91,17 @@
 			    ))]
 	       [set-meta-and-eval
 		(muo (e s/c r st k)
-		     (fresh (meta-a meta-b)
+		     (fresh (meta-a meta-b meta-c)
 			    ((muo (e s/c r st k)
-				 (fresh (mma)
+				 (fresh (mma mmb)
 					(==mk (42 43) mma)
+					(==mk (24 42) mmb)
 					(meaning-mk e s/c r st k)))
 			     ==mk meta-b 42)
 			    (meaning-mk e s/c r st k)))])
 	      (fresh (a b)
 		     (set-meta-and-eval ==mk (b b) a)
-		     (==lv b meta-a mma)))
+		     (==lv b (meta-c (meta-a meta-b)) (mma mmb))))
 	    out))
- '((level: () result: (((42 43) (42 43))))))
+ '((level: () result: ((((42 43) (24 42)) ((42 43) (24 42)))))))
 
