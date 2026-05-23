@@ -34,7 +34,13 @@ Other than the key features, we also have a few Blond like constructs for dealin
 | `(add-exit-lv-conto k k^)` | relation that relates a reified continuation with a modified one that exit level at the end  |
 | `(rei-lookup e r st)`      | function taking a symbol and reified environment and store, returns value of symbol in store |
 
+## Argument Evaluation
 
+In miniKanren, relations are implemented as functions in the host language, so evaluation of arguments follows the host language's protocol. In Jadeo, miniKanren levels and Scheme levels are distinguished more clearly and relations have their own protocol for argument evaluation.
+
+When evaluating an expression that either starts with a primitive relation like ``==mk``, or a relation-abstraction (essentially a lambda) defined via ``rel-abs`` keyword, Jadeo will traverse the argument trees and do lookup to all symbols appearing in it. For instance, when evaluating ``(==mk (a b) (c d))``, Jadeo will lookup symbols ``a``,``b``,``c``, and ``d``, and pass the result of lookup (usually a variable defined by a ``fresh``) to the ``==mk`` relation.
+
+Some special forms like ``meaning-mk`` or ``meaning-scm`` do additional things to their arguments. After looking up a term to get a term with variables in it, the current substitution will be used to get the actual value the term corresponds to, and the resulting term will be used to generate new levels.
 
 ## Example Use Cases
 
