@@ -1,0 +1,69 @@
+(define test-failed #f)
+#|
+These tests uses mk-mk-scheme structure for tower, so are incompatible with tests in meta-unify-tst
+To test them, change the tower to be mk-mk-scheme cycle, rather than pure mk tower
+|#
+
+(test "muo-3"
+      (run 1 (out) (runo 'all
+			 '(fresh (a)
+				 ((muo (e s/c r st k)
+				       (fresh (b) ((muos (e1 s/c1 r1 st1 k1)
+							 (list 'env: r1 'store: st1))
+						   1 2 3 4)))
+				  a b c d))
+			 out))
+      ' ((level: ((())) result: (env: ((b k st r s/c e ==mk conj disj call/fresh fresh conj* conde let letrec delay rel-abs muo muos meaning-scm meaning-mk eval-scm eval-scmo new-scm new-mk apply-cont-jmp apply-cont-psh add-exit-lv-conto) (((((((((((((((((((((((((((((())))))))))))))))))))))))))))) (((((((((((((((((((((((()))))))))))))))))))))))) ((((((((((((((((((((((((())))))))))))))))))))))))) (((((((((((((((((((((((((()))))))))))))))))))))))))) ((((((((((((((((((((((((((())))))))))))))))))))))))))) (((((((((((((((((((((((((((()))))))))))))))))))))))))))) 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)) store: ((((((((((((((((((((((((((((((())))))))))))))))))))))))))))) (((((((((((((((((((((((()))))))))))))))))))))))) ((((((((((((((((((((((((())))))))))))))))))))))))) (((((((((((((((((((((((((()))))))))))))))))))))))))) ((((((((((((((((((((((((((())))))))))))))))))))))))))) (((((((((((((((((((((((((((()))))))))))))))))))))))))))) 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1) ((var (()) ()) id-cont (((((((((((((((((((((((((()))))))))))))))))))))))) 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1) ((var () ()) (rel-subr ==mk) (goal-comb conj) (goal-comb disj) (goal-comb call/fresh) (goal-comb fresh) (goal-comb conj*) (goal-comb conde) (goal-comb let) (goal-comb letrec) (goal-comb delay) (app-gen rel-abs) (app-gen muo) (app-gen muos) (rel-subr meaning-scm) (rel-subr meaning-mk) (rel-subr eval-scm) (rel-subr eval-scmo) (rel-subr new-scm) (rel-subr new-mk) (rel-subr apply-cont-jmp) (rel-subr apply-cont-psh) (rel-subr add-exit-lv-conto))) ((a ==mk conj disj call/fresh fresh conj* conde let letrec delay rel-abs muo muos meaning-scm meaning-mk eval-scm eval-scmo new-scm new-mk apply-cont-jmp apply-cont-psh add-exit-lv-conto) ((((((((((((((((((((((((()))))))))))))))))))))))) 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)) (() ()) (a b c d) (rel-subr ==mk) (goal-comb conj) (goal-comb disj) (goal-comb call/fresh) (goal-comb fresh) (goal-comb conj*) (goal-comb conde) (goal-comb let) (goal-comb letrec) (goal-comb delay) (app-gen rel-abs) (app-gen muo) (app-gen muos) (rel-subr meaning-scm) (rel-subr meaning-mk) (rel-subr eval-scm) (rel-subr eval-scmo) (rel-subr new-scm) (rel-subr new-mk) (rel-subr apply-cont-jmp) (rel-subr apply-cont-psh) (rel-subr add-exit-lv-conto)))))))
+
+
+(test "muo-4"
+      (run 1 (out) (runo 'all
+			 '(fresh (a)
+				 ((muo (e s/c r st k)
+				       (fresh (b) ((muos (e1 s/c1 r1 st1 k1)
+							 (let ((e2 (list 42 24 e1)))
+							   ((lambda (a) (list a e2))
+							    99)))
+						   1 2 3 4)))
+				  a b c d))
+			 out))
+      '((level: ((())) result: (99 (42 24 (1 2 3 4))))))
+(test "muo-4-e-play1" ;; getting the symbol e directly inside muos
+      (run 1 (out) (runo 'all
+			 '(fresh (a)
+				 ((muo (e s/c r st k)
+				       (fresh (b)
+					      ((muos (e1 s/c1 r1 st1 k1)
+						     e1)
+					       e)))
+				  a 1)
+				 (==mk a 2))
+			 out))
+      '((level: ((())) result: (e))))
+(test "muo-4-e-play2" ;; getting the value e directly inside muos
+      (run 1 (out) (runo 'all
+			 '(fresh (a)
+				 ((muo (e s/c r st k)
+				       (fresh (b)
+					      ((muos (e1 s/c1 r1 st1 k1)
+						     (rei-lookup (car e1) r1 st1))
+					       e)))
+				  a 1)
+				 (==mk a 2))
+			 out))
+      '((level: ((())) result: (a 1))))
+
+(test "muo-5"
+      (run 1 (out) (runo 'all
+			 '(fresh (a)
+				 ((muo (e s/c r st k)
+				       (fresh (b) ((muos (e1 s/c1 r1 st1 k1)
+							 (let ((e2 (list 42 24
+									 (cons (car (cdr e1))
+									       (cdr (cdr (cdr e1)))))))
+							   ((lambda (a) (list a e2))
+							    99)))
+						   1 2222 3 4)))
+				  a b c d))
+			 out))
+      '((level: ((())) result: (99 (42 24 (2222 4))))))
